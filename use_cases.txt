@@ -13,3 +13,10 @@ Casos de uso:
 	a) Los levanta del mapa.
 	b) Opera sobre ellos.
 	c) Broadcastea la info.
+
+3) El líder solicita información del server y se produce algún tipo de problema:
+	a) Se le avisa a todos en el canal sobre el problema ocurrido al solicitar info del server para tal UID.
+	b) Aquel que esté esperando información para ese UID y reciba ese mensaje lanza una RemoteException???
+	b_bis) Se vuelve a solicitar un número x de veces al líder que obtenga la información del servidor.
+	c_bis) En caso de fallar luego de x veces, se lanza una RemoteException.
+
