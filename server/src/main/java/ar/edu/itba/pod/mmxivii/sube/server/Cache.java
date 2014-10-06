@@ -2,6 +2,8 @@ package ar.edu.itba.pod.mmxivii.sube.server;
 
 import java.rmi.RemoteException;
 import java.rmi.server.UID;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.jgroups.Address;
 import org.jgroups.JChannel;
@@ -15,6 +17,7 @@ public class Cache extends ReceiverAdapter implements CardService {
 	private JChannel channel;
 	private String service_name;
 	private Address leader_address;
+	private Map<UID, UserData> user_data;
 
 	public Cache(String cluster_name, String service_name)
 			throws Exception {
@@ -22,6 +25,7 @@ public class Cache extends ReceiverAdapter implements CardService {
 		this.channel.setReceiver(this);
 		this.channel.connect(cluster_name);
 		this.service_name = service_name;
+		this.user_data = new HashMap<UID, UserData>();
 	}
 
 	public void sendMessage(Message msg) throws Exception {
