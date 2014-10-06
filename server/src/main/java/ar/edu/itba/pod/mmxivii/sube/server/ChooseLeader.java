@@ -25,11 +25,12 @@ public class ChooseLeader extends ReceiverAdapter {
 
 	public static void main(String[] args) throws Exception {
 		ChooseLeader cl = new ChooseLeader("cacota", args[0]);
-		System.out.println(cl.channel.getView().getMembers().get(0));
+		System.out.println(cl.channel.getView().getMembers().get(0) + " is the leader.");
 		while (true) {
 			if (cl.isLeader()) {
 				if (!cl.channel.getAddress().equals(cl.leader_address)) {
 					cl.sendLeaderCodeToChannel();
+					cl.leader_address = cl.channel.getAddress();
 					System.out.println(cl.service_name + " is the leader!");
 				}
 			}
@@ -37,8 +38,10 @@ public class ChooseLeader extends ReceiverAdapter {
 	}
 
 	public void receive(Message msg) {
-		if (msg.getObject() instanceof Integer) {
-			processCode(msg);
+		if (!msg.getSrc().equals(channel.getAddress())) {
+			if (msg.getObject() instanceof Integer) {
+				processCode(msg);
+			}
 		}
 	}
 
