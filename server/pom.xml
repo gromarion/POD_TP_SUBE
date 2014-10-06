@@ -10,6 +10,11 @@
     <packaging>jar</packaging>
     <name>TP Sube Server</name>
     <dependencies>
+    	<dependency>
+			<groupId>org.jgroups</groupId>
+			<artifactId>jgroups</artifactId>
+			<version>3.5.1.Final</version>
+		</dependency>
         <dependency>
             <groupId>itba-pod-2014-2c</groupId>
             <artifactId>sube-common</artifactId>
