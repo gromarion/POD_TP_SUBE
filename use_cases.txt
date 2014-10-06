@@ -1,0 +1,15 @@
+Casos de uso:
+
+¿¿¿QUE ONDA CON LOS CÓDIGOS DE ERROR QUE PUEDA DEVOLVER EL SERVER (RECORDAR QUE ES LENTO Y CHOTO)???
+
+1) El caché no tiene los datos del usuario solicitado:
+	a) El caché le pide los datos al líder y guarda a ese UID en una lista de UIDs para luego hacer algo con ellos.
+	b) El líder solicita los datos al server.
+	c) El líder guarda la información en sí mismo y se la broadcastea a todos.
+	d) El caché que tenía que hacer algo con ese UID ahora lo tiene, opera, y broadcastea a todos.
+	e) Todos actualizan su información.
+
+2) El caché tiene los datos del usuario solicitado:
+	a) Los levanta del mapa.
+	b) Opera sobre ellos.
+	c) Broadcastea la info.
