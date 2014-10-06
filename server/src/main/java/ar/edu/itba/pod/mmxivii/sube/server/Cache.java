@@ -5,7 +5,6 @@ import java.rmi.server.UID;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.jgroups.Address;
 import org.jgroups.JChannel;
 import org.jgroups.Message;
 import org.jgroups.ReceiverAdapter;
@@ -16,11 +15,9 @@ public class Cache extends ReceiverAdapter implements CardService {
 
 	private JChannel channel;
 	private String service_name;
-	private Address leader_address;
 	private Map<UID, UserData> user_data;
 
-	public Cache(String cluster_name, String service_name)
-			throws Exception {
+	public Cache(String cluster_name, String service_name) throws Exception {
 		this.channel = new JChannel();
 		this.channel.setReceiver(this);
 		this.channel.connect(cluster_name);
@@ -37,75 +34,61 @@ public class Cache extends ReceiverAdapter implements CardService {
 		System.out.println(cl.channel.getView().getMembers().get(0)
 				+ " is the leader.");
 		while (true) {
-			if (cl.isTeamLeaderAndNoOneKnows()) {
-				cl.notifyEveryOneWhoTheLeaderIs();
+			if (cl.isLeader()) {
+				System.out.println(cl.service_name + " is the leader.");
 			}
 		}
 	}
 
 	public void receive(Message msg) {
 		if (!msg.getSrc().equals(channel.getAddress())) {
-			if (msg.getObject() instanceof Integer) {
-				processCode(msg);
-			}
 		}
-	}
-	
-	public boolean isTeamLeaderAndNoOneKnows() {
-		return isLeader() && !channel.getAddress().equals(leader_address);
-	}
-
-	public void notifyEveryOneWhoTheLeaderIs() {
-		sendLeaderCodeToChannel();
-		leader_address = channel.getAddress();
-		System.out.println(service_name + " is the leader!");
 	}
 
 	// PRIVATE METHODS
-
-	private void processCode(Message msg) {
-		int code = (Integer) msg.getObject();
-		switch (code) {
-		case -1234:
-			setNewLeader(msg);
-			break;
-		default:
-			break;
-		}
-	}
-
-	private void sendLeaderCodeToChannel() {
-		try {
-			channel.send(new Message(null, channel.getAddress(), -1234));
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
 
 	private boolean isLeader() {
 		return channel.getView().getMembers().get(0)
 				.equals(channel.getAddress());
 	}
-	
-	private void setNewLeader(Message msg) {
-		leader_address = msg.getSrc();
-		System.out.println("Set new leader: " + leader_address);
-	}
 
 	@Override
 	public double getCardBalance(UID id) throws RemoteException {
-		return 0;
+		UserData data = user_data.get(id);
+		if (data != null) {
+			return data.getBalance();
+		} else {
+			// Leader must get info and send it back.
+		}
 	}
 
 	@Override
 	public double travel(UID id, String description, double amount)
 			throws RemoteException {
-		return 0;
+		UserData data = this.user_data.get(id);
+		if (data != null) {
+			if (data.substractAmount(amount)) {
+				return data.getBalance();
+			} else {
+				// Notify balancer about error (throw exception???)
+			}
+		} else {
+			// Leader must get info and send it back.
+		}
 	}
 
 	@Override
 	public double recharge(UID id, String description, double amount)
 			throws RemoteException {
-		return 0;
+		UserData data = this.user_data.get(id);
+		if (data != null) {
+			if (data.addAmount(amount)) {
+				return data.getBalance();
+			} else {
+				// Notify balancer about error (throw exception???)
+			}
+		} else {
+			// Leader must get info and send it back.
+		}
 	}
 }
