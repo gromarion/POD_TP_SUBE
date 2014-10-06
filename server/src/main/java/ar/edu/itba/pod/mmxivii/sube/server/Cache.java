@@ -1,17 +1,22 @@
 package ar.edu.itba.pod.mmxivii.sube.server;
 
+import java.rmi.RemoteException;
+import java.rmi.server.UID;
+
 import org.jgroups.Address;
 import org.jgroups.JChannel;
 import org.jgroups.Message;
 import org.jgroups.ReceiverAdapter;
 
-public class ChooseLeader extends ReceiverAdapter {
+import ar.edu.itba.pod.mmxivii.sube.common.CardService;
+
+public class Cache extends ReceiverAdapter implements CardService {
 
 	private JChannel channel;
 	private String service_name;
 	private Address leader_address;
 
-	public ChooseLeader(String cluster_name, String service_name)
+	public Cache(String cluster_name, String service_name)
 			throws Exception {
 		this.channel = new JChannel();
 		this.channel.setReceiver(this);
@@ -24,7 +29,7 @@ public class ChooseLeader extends ReceiverAdapter {
 	}
 
 	public static void main(String[] args) throws Exception {
-		ChooseLeader cl = new ChooseLeader("cacota", args[0]);
+		Cache cl = new Cache("cacota", args[0]);
 		System.out.println(cl.channel.getView().getMembers().get(0)
 				+ " is the leader.");
 		while (true) {
@@ -58,8 +63,7 @@ public class ChooseLeader extends ReceiverAdapter {
 		int code = (Integer) msg.getObject();
 		switch (code) {
 		case -1234:
-			leader_address = msg.getSrc();
-			System.out.println("Set new leader: " + leader_address);
+			setNewLeader(msg);
 			break;
 		default:
 			break;
@@ -77,5 +81,27 @@ public class ChooseLeader extends ReceiverAdapter {
 	private boolean isLeader() {
 		return channel.getView().getMembers().get(0)
 				.equals(channel.getAddress());
+	}
+	
+	private void setNewLeader(Message msg) {
+		leader_address = msg.getSrc();
+		System.out.println("Set new leader: " + leader_address);
+	}
+
+	@Override
+	public double getCardBalance(UID id) throws RemoteException {
+		return 0;
+	}
+
+	@Override
+	public double travel(UID id, String description, double amount)
+			throws RemoteException {
+		return 0;
+	}
+
+	@Override
+	public double recharge(UID id, String description, double amount)
+			throws RemoteException {
+		return 0;
 	}
 }
