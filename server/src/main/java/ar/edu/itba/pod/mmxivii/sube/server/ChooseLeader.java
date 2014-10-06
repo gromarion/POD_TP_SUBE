@@ -25,14 +25,11 @@ public class ChooseLeader extends ReceiverAdapter {
 
 	public static void main(String[] args) throws Exception {
 		ChooseLeader cl = new ChooseLeader("cacota", args[0]);
-		System.out.println(cl.channel.getView().getMembers().get(0) + " is the leader.");
+		System.out.println(cl.channel.getView().getMembers().get(0)
+				+ " is the leader.");
 		while (true) {
-			if (cl.isLeader()) {
-				if (!cl.channel.getAddress().equals(cl.leader_address)) {
-					cl.sendLeaderCodeToChannel();
-					cl.leader_address = cl.channel.getAddress();
-					System.out.println(cl.service_name + " is the leader!");
-				}
+			if (cl.isTeamLeaderAndNoOneKnows()) {
+				cl.notifyEveryOneWhoTheLeaderIs();
 			}
 		}
 	}
@@ -44,6 +41,18 @@ public class ChooseLeader extends ReceiverAdapter {
 			}
 		}
 	}
+	
+	public boolean isTeamLeaderAndNoOneKnows() {
+		return isLeader() && !channel.getAddress().equals(leader_address);
+	}
+
+	public void notifyEveryOneWhoTheLeaderIs() {
+		sendLeaderCodeToChannel();
+		leader_address = channel.getAddress();
+		System.out.println(service_name + " is the leader!");
+	}
+
+	// PRIVATE METHODS
 
 	private void processCode(Message msg) {
 		int code = (Integer) msg.getObject();
