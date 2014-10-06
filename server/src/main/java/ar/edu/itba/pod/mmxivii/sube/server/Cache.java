@@ -3,7 +3,9 @@ package ar.edu.itba.pod.mmxivii.sube.server;
 import java.rmi.RemoteException;
 import java.rmi.server.UID;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
+import java.util.Queue;
 
 import org.jgroups.Address;
 import org.jgroups.JChannel;
@@ -16,7 +18,8 @@ public class Cache extends ReceiverAdapter implements CardService {
 
 	private JChannel channel;
 	private String service_name;
-	private Map<UID, UserData> user_data; 
+	private Map<UID, UserData> user_data;
+	private Map<UID, Queue<Operation>> pending_operations = new HashMap<UID, Queue<Operation>>();
 
 	public Cache(String cluster_name, String service_name) throws Exception {
 		this.channel = new JChannel();
@@ -45,14 +48,16 @@ public class Cache extends ReceiverAdapter implements CardService {
 				if (data != null)
 					sendDataToEveryone(data);
 				else {
-					// Hablo con el server, y me contesta el balance de un flaco???
-					UserData new_data = new UserData(id, 0); // En lugar de 0 poner
+					// Hablo con el server, y me contesta el balance de un
+					// flaco???
+					UserData new_data = new UserData(id, 0); // En lugar de 0
+																// poner
 					// lo que devuelve
 					// el server
 					user_data.put(id, new_data);
 					sendDataToEveryone(new_data);
 				}
-			} else if(msg.getObject() instanceof UserData) {
+			} else if (msg.getObject() instanceof UserData) {
 				UserData new_data = (UserData) msg.getObject();
 				user_data.put(new_data.getId(), new_data);
 			}
@@ -73,9 +78,9 @@ public class Cache extends ReceiverAdapter implements CardService {
 				user_data.put(id, new_data);
 				sendDataToEveryone(new_data);
 			} else {
-				
+				addPendingOperation(id, new Operation(Type.GET));
 				askLeaderUserData(id);
-//				while(en operaciones a resolver no tenga la respueta);
+				// while(en operaciones a resolver no tenga la respueta);
 			}
 		}
 		return 0;
@@ -135,7 +140,23 @@ public class Cache extends ReceiverAdapter implements CardService {
 	private Address getLeader() {
 		return channel.getView().getMembers().get(0);
 	}
-	
+
+	private void addPendingOperation(UID id, Operation operation) {
+		if (pending_operations.containsKey(id)) {
+			pending_operations.get(id).add(operation);
+		} else {
+			LinkedList<Operation> queue = new LinkedList<Operation>(); // TODO:
+																		// Verificar
+																		// que
+																		// esto
+																		// sea
+																		// ordenado.
+																		// CLAVE
+			queue.push(operation);
+			pending_operations.put(id, queue);
+		}
+	}
+
 	private void sendDataToEveryone(Object o) {
 		try {
 			channel.send(new Message(null, null, o));
