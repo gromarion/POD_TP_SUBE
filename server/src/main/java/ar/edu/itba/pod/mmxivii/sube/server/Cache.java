@@ -17,16 +17,15 @@ import ar.edu.itba.pod.mmxivii.sube.common.CardService;
 public class Cache extends ReceiverAdapter implements CardService {
 
 	private JChannel channel;
-	private String service_name;
 	private Map<UID, UserData> user_data;
-	private Map<UID, Queue<Operation>> pending_operations = new HashMap<UID, Queue<Operation>>();
+	private Map<UID, Queue<Operation>> pending_operations;
 
 	public Cache(String cluster_name, String service_name) throws Exception {
 		this.channel = new JChannel();
 		this.channel.setReceiver(this);
 		this.channel.connect(cluster_name);
-		this.service_name = service_name;
 		this.user_data = new HashMap<UID, UserData>();
+		this.pending_operations = new HashMap<UID, Queue<Operation>>();
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -34,8 +33,9 @@ public class Cache extends ReceiverAdapter implements CardService {
 		System.out.println(cl.channel.getView().getMembers().get(0)
 				+ " is the leader.");
 		while (true) {
-			if (cl.isLeader()) {
-				System.out.println(cl.service_name + " is the leader.");
+			if (!cl.isLeader()) {
+				System.out.println(cl.getCardBalance(new UID((short) 100)));
+				break;
 			}
 		}
 	}
@@ -43,44 +43,31 @@ public class Cache extends ReceiverAdapter implements CardService {
 	public void receive(Message msg) {
 		if (!msg.getSrc().equals(channel.getAddress())) {
 			if (msg.getObject() instanceof UID) {
-				UID id = (UID) msg.getObject();
-				UserData data = user_data.get(id);
-				if (data != null)
-					sendDataToEveryone(data);
-				else {
-					// Hablo con el server, y me contesta el balance de un
-					// flaco???
-					UserData new_data = new UserData(id, 0); // En lugar de 0
-																// poner
-					// lo que devuelve
-					// el server
-					user_data.put(id, new_data);
-					sendDataToEveryone(new_data);
-				}
+				processInformationRequestAsLeader((UID) msg.getObject());
 			} else if (msg.getObject() instanceof UserData) {
 				UserData new_data = (UserData) msg.getObject();
-				user_data.put(new_data.getId(), new_data);
+				user_data.put(new_data.userId(), new_data);
 			}
 		}
 	}
 
 	@Override
 	public double getCardBalance(UID id) throws RemoteException {
+		System.out.println(id.toString());
 		UserData data = user_data.get(id);
 		if (data != null) {
-			return data.getBalance();
+			return data.balance();
 		} else {
 			if (iAmTheLeader()) {
-				// Hablo con el server, y me contesta el balance de un flaco???
-				UserData new_data = new UserData(id, 0); // En lugar de 0 poner
-															// lo que devuelve
-															// el server
-				user_data.put(id, new_data);
-				sendDataToEveryone(new_data);
+				processInformationRequestAsLeader(id);
 			} else {
 				addPendingOperation(id, new Operation(Type.GET));
 				askLeaderUserData(id);
-				// while(en operaciones a resolver no tenga la respueta);
+				while (user_data.get(id) == null
+						|| !user_data.get(id).isUpdated()) {
+					System.out.println("waiting for response");
+				}
+				return user_data.get(id).balance();
 			}
 		}
 		return 0;
@@ -92,7 +79,7 @@ public class Cache extends ReceiverAdapter implements CardService {
 		UserData data = this.user_data.get(id);
 		if (data != null) {
 			if (data.substractAmount(amount)) {
-				return data.getBalance();
+				return data.balance();
 			} else {
 				// Notify balancer about error (throw exception???)
 			}
@@ -108,7 +95,7 @@ public class Cache extends ReceiverAdapter implements CardService {
 		UserData data = this.user_data.get(id);
 		if (data != null) {
 			if (data.addAmount(amount)) {
-				return data.getBalance();
+				return data.balance();
 			} else {
 				// Notify balancer about error (throw exception???)
 			}
@@ -122,6 +109,7 @@ public class Cache extends ReceiverAdapter implements CardService {
 
 	private void askLeaderUserData(UID id) {
 		try {
+			System.out.println("Asking leader for information...");
 			channel.send(new Message(getLeader(), id));
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -155,6 +143,20 @@ public class Cache extends ReceiverAdapter implements CardService {
 			queue.push(operation);
 			pending_operations.put(id, queue);
 		}
+	}
+
+	private void processInformationRequestAsLeader(UID id) {
+		System.out.print("Processing request...");
+		UserData data = user_data.get(id);
+		if (data != null) {
+			sendDataToEveryone(data);
+		} else {
+			UserData new_data = new UserData(id, TestRepo.getInstance()
+					.getBalance(id));
+			user_data.put(id, new_data);
+			sendDataToEveryone(new_data);
+		}
+		System.out.println("OK");
 	}
 
 	private void sendDataToEveryone(Object o) {
