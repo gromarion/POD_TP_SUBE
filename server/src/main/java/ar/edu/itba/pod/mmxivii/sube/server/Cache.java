@@ -50,9 +50,9 @@ public class Cache extends ReceiverAdapter implements CardService {
 			if (msg.getObject() instanceof Operation) {
 				Operation operation = (Operation) msg.getObject();
 				if (operation.isCompleted())
-					addPendingOperation(operation);
-				else
 					removePendingOperation(operation);
+				else
+					addPendingOperation(operation);
 			} else if (msg.getObject() instanceof UserData) {
 				UserData new_data = (UserData) msg.getObject();
 				user_data.put(new_data.userId(), new_data);
@@ -64,10 +64,11 @@ public class Cache extends ReceiverAdapter implements CardService {
 	public double getCardBalance(UID id) throws RemoteException {
 		Operation operation = new Operation(Type.GET, id,
 				this.channel.getAddress(), false);
-		informEveryoneAboutThisOperation(operation);
+		informEveryoneAboutPendingOperation(operation);
 		UserData data = user_data.get(id);
 		if (data != null) {
 			informEveryoneOfCompletedOperation(operation);
+			sendDataToEveryone(data);
 			return data.balance();
 		} else {
 			return 0;
@@ -155,12 +156,13 @@ public class Cache extends ReceiverAdapter implements CardService {
 		return members.get(members.size() - 1).equals(address);
 	}
 
-	private void informEveryoneAboutThisOperation(Operation operation) {
+	private void informEveryoneAboutPendingOperation(Operation operation) {
 		sendDataToEveryone(operation);
 	}
 
 	private void informEveryoneOfCompletedOperation(Operation operation) {
-
+		operation.complete();
+		sendDataToEveryone(operation);
 	}
 
 	private void addPendingOperation(Operation operation) {

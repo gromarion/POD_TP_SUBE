@@ -33,10 +33,14 @@ public class Operation {
 	}
 
 	public boolean isCompleted() {
-		return completed;
+		return this.completed;
+	}
+	
+	public void complete() {
+		this.completed = true;
 	}
 	
 	public Address address() {
-		return address;
+		return this.address;
 	}
 }
