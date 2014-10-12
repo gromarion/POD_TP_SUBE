@@ -2,21 +2,15 @@ Casos de uso:
 
 ¿¿¿QUE ONDA CON LOS CÓDIGOS DE ERROR QUE PUEDA DEVOLVER EL SERVER (RECORDAR QUE ES LENTO Y CHOTO)???
 
-1) El caché no tiene los datos del usuario solicitado:
-	a) El caché le pide los datos al líder y guarda a ese UID en una lista de UIDs para luego hacer algo con ellos.
-	b) El líder solicita los datos al server.
-	c) El líder guarda la información en sí mismo y se la broadcastea a todos.
-	d) El caché que tenía que hacer algo con ese UID ahora lo tiene, opera, y broadcastea a todos.
-	e) Todos actualizan su información.
+1) El cache no tiene los datos del usuario solicitado:
+	a) El cache le informa al resto de los caches acerca de la operación que está por realizar.
+	b) El cache le envía al server el método 'addCardOperation', el cache recibe lo que el server le envíe, y le asigna a un mapa privado <UID, UserData> el valor devuelto.
+	c) Replica la información.
 
-2) El caché tiene los datos del usuario solicitado:
+2) El cache tiene los datos del usuario solicitado:
 	a) Los levanta del mapa.
 	b) Opera sobre ellos.
-	c) Broadcastea la info.
+	c) Replica la info.
 
-3) El líder solicita información del server y se produce algún tipo de problema:
-	a) Se le avisa a todos en el canal sobre el problema ocurrido al solicitar info del server para tal UID.
-	b) Aquel que esté esperando información para ese UID y reciba ese mensaje lanza una RemoteException???
-	b_bis) Se vuelve a solicitar un número x de veces al líder que obtenga la información del servidor.
-	c_bis) En caso de fallar luego de x veces, se lanza una RemoteException.
-
+3) Un cache replica sus operaciones a realizar entre todos los otros caches:
+	a) 
