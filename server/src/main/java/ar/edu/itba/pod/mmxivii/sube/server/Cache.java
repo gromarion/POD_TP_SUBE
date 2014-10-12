@@ -21,7 +21,7 @@ public class Cache extends ReceiverAdapter implements CardService {
 	private JChannel channel;
 	private Map<UID, UserData> user_data;
 	private Map<Address, Map<UID, Queue<Operation>>> pending_operations;
-	private Address controlling;
+	private Address controlled_cache;
 
 	public Cache(String cluster_name, String service_name) throws Exception {
 		this.channel = new JChannel();
@@ -29,7 +29,7 @@ public class Cache extends ReceiverAdapter implements CardService {
 		this.channel.connect(cluster_name);
 		this.user_data = new HashMap<UID, UserData>();
 		this.pending_operations = new HashMap<Address, Map<UID, Queue<Operation>>>();
-		this.controlling = addressToControl(true);
+		this.controlled_cache = addressToControl(true);
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -37,29 +37,48 @@ public class Cache extends ReceiverAdapter implements CardService {
 		System.out.println(cl.channel.getView().getMembers().get(0)
 				+ " is the leader.");
 		while (true) {
-			if (cl.controllingIsDead()) {
-				System.out.println(cl.controlling + " has died!");
-				cl.controlling = cl.addressToControl(false);
+			if (cl.controlledCacheIsDead()) {
+				System.out.println(cl.controlled_cache + " has died!");
+				cl.controlled_cache = cl.addressToControl(false);
 			}
-			System.out.println("Now controlling " + cl.controlling);
+			System.out.println("Now controlling " + cl.controlled_cache);
 		}
 	}
 
+	/**
+	 * There are two options: the message from the channel is an incoming
+	 * operation, completed or not, or it is updated data from a particular
+	 * user. If it is an incomplete operation announced from another cache, then
+	 * the operation is stored in a queue and marked as pending. If it is a
+	 * completed operation, it is removed from the pending operations queue. If
+	 * it is an updated data from a certain user, it is added to a map UID,
+	 * UserData.
+	 * 
+	 * @param msg
+	 *            A message received from the channel.
+	 */
 	public void receive(Message msg) {
 		if (!msg.getSrc().equals(channel.getAddress())) {
 			if (msg.getObject() instanceof Operation) {
-				Operation operation = (Operation) msg.getObject();
-				if (operation.isCompleted())
-					removePendingOperation(operation);
-				else
-					addPendingOperation(operation);
+				handleOperation((Operation) msg.getObject());
 			} else if (msg.getObject() instanceof UserData) {
-				UserData new_data = (UserData) msg.getObject();
-				user_data.put(new_data.userId(), new_data);
+				updateUserData((UserData) msg.getObject());
 			}
 		}
 	}
 
+	/**
+	 * Returns the amount of money left in the card of a given user. Before
+	 * handling the operation, the cache informs every other cache in the
+	 * channel that he is about to make this operation. When he finishes, he
+	 * informs the other caches that the operation has been completed. This is
+	 * done in case this cache stops working, any other cache could take care of
+	 * the pending operation.
+	 * 
+	 * @param id
+	 *            The UID of the user.
+	 * @return The balance of the card for the specified user.
+	 */
 	@Override
 	public double getCardBalance(UID id) throws RemoteException {
 		Operation operation = new Operation(Type.GET, id,
@@ -71,7 +90,7 @@ public class Cache extends ReceiverAdapter implements CardService {
 			sendDataToEveryone(data);
 			return data.balance();
 		} else {
-			return 0;
+			return 0; // Communication with server should be here.
 		}
 	}
 
@@ -107,17 +126,42 @@ public class Cache extends ReceiverAdapter implements CardService {
 		return 0;
 	}
 
+	/**
+	 * When a new cache is connected to the channel, it controls the first of
+	 * the caches in the member list, and the one that was doing it before will
+	 * control the newly connected.
+	 * 
+	 * @param new_view
+	 *            The view that is about to connect.
+	 */
 	public void viewAccepted(View new_view) {
 		List<Address> members = new_view.getMembers();
-		if (controlling == null)
-			controlling = members.get(members.size() - 1);
+		if (controlled_cache == null)
+			controlled_cache = members.get(members.size() - 1);
 	}
 
-	public boolean controllingIsDead() {
-		return !this.channel.getView().getMembers().contains(controlling);
+	/**
+	 * Every cache controls some other to see if it is still alive or not. This
+	 * method returns weather the controlled cache is still alive or not.
+	 * 
+	 * @return If the controlled cache is dead or not.
+	 */
+	public boolean controlledCacheIsDead() {
+		return !this.channel.getView().getMembers().contains(controlled_cache);
 	}
 
 	// PRIVATE METHODS
+
+	private void handleOperation(Operation operation) {
+		if (operation.isCompleted())
+			removePendingOperation(operation);
+		else
+			addPendingOperation(operation);
+	}
+
+	private void updateUserData(UserData new_data) {
+		user_data.put(new_data.userId(), new_data);
+	}
 
 	private Address addressToControl(boolean first_connection) {
 		List<Address> members = this.channel.getView().getMembers();
@@ -193,7 +237,8 @@ public class Cache extends ReceiverAdapter implements CardService {
 	}
 
 	private void removePendingOperation(Operation operation) {
-		Queue<Operation> address_pending_operations = pending_operations.get(operation.address()).get(operation.userId());
+		Queue<Operation> address_pending_operations = pending_operations.get(
+				operation.address()).get(operation.userId());
 		if (address_pending_operations.peek().equals(operation))
 			address_pending_operations.poll();
 	}
