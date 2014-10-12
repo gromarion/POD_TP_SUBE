@@ -81,14 +81,9 @@ public class Cache extends ReceiverAdapter implements CardService {
 	 */
 	@Override
 	public double getCardBalance(UID id) throws RemoteException {
-		Operation operation = new Operation(Type.GET, id,
-				this.channel.getAddress(), false);
-		informEveryoneAboutPendingOperation(operation);
-		UserData data = user_data.get(id);
+		UserData data = prepareForOperation(id, OperationType.BALANCE);
 		if (data != null) {
-			informEveryoneOfCompletedOperation(operation);
-			sendDataToEveryone(data);
-			return data.balance();
+			return replicateOperation(data, OperationType.BALANCE);
 		} else {
 			return 0; // Communication with server should be here.
 		}
@@ -97,11 +92,11 @@ public class Cache extends ReceiverAdapter implements CardService {
 	@Override
 	public double travel(UID id, String description, double amount)
 			throws RemoteException {
-		UserData data = this.user_data.get(id);
+		UserData data = prepareForOperation(id, OperationType.TRAVEL);
 		if (data != null) {
-			if (data.substractAmount(amount)) {
-				return data.balance();
-			} else {
+			if (data.substractAmount(amount))
+				return replicateOperation(data, OperationType.TRAVEL);
+			else {
 				// Notify balancer about error (throw exception???)
 			}
 		} else {
@@ -113,11 +108,11 @@ public class Cache extends ReceiverAdapter implements CardService {
 	@Override
 	public double recharge(UID id, String description, double amount)
 			throws RemoteException {
-		UserData data = this.user_data.get(id);
+		UserData data = prepareForOperation(id, OperationType.RECHARGE);
 		if (data != null) {
-			if (data.addAmount(amount)) {
-				return data.balance();
-			} else {
+			if (data.addAmount(amount))
+				return replicateOperation(data, OperationType.RECHARGE);
+			else {
 				// Notify balancer about error (throw exception???)
 			}
 		} else {
@@ -151,6 +146,21 @@ public class Cache extends ReceiverAdapter implements CardService {
 	}
 
 	// PRIVATE METHODS
+
+	private UserData prepareForOperation(UID id, OperationType operation_type) {
+		Operation operation = new Operation(operation_type, id,
+				this.channel.getAddress(), false);
+		informEveryoneAboutPendingOperation(operation);
+		return user_data.get(id);
+	}
+
+	private double replicateOperation(UserData data,
+			OperationType operation_type) {
+		informEveryoneOfCompletedOperation(new Operation(operation_type,
+				data.userId(), this.channel.getAddress(), true));
+		sendDataToEveryone(data);
+		return data.balance();
+	}
 
 	private void handleOperation(Operation operation) {
 		if (operation.isCompleted())
@@ -188,9 +198,8 @@ public class Cache extends ReceiverAdapter implements CardService {
 					return 0;
 				else
 					return i;
-			} else if (address.equals(this.channel.getAddress())) {
+			} else if (address.equals(this.channel.getAddress()))
 				next_one_in_line = true;
-			}
 			i++;
 		}
 		return 0;

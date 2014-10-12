@@ -9,10 +9,10 @@ public class Operation {
 	private Date date;
 	private UID user_id;
 	private Address address;
-	private Type type;
+	private OperationType type;
 	private boolean completed;
 
-	public Operation(Type type, UID user_id, Address address, boolean completed) {
+	public Operation(OperationType type, UID user_id, Address address, boolean completed) {
 		this.type = type;
 		this.user_id = user_id;
 		this.address = address;
@@ -24,7 +24,7 @@ public class Operation {
 		return this.user_id;
 	}
 
-	public Type type() {
+	public OperationType type() {
 		return this.type;
 	}
 
