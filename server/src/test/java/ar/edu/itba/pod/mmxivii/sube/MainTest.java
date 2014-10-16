@@ -1,6 +1,6 @@
 package ar.edu.itba.pod.mmxivii.sube;
 
-import ar.edu.itba.pod.mmxivii.sube.server.Main;
+import ar.edu.itba.pod.mmxivii.sube.server.MainServer;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -20,7 +20,7 @@ public class MainTest
 			public void run()
 			{
 				try {
-					Main.main(ARGS);
+					MainServer.main(ARGS);
 				} catch (Exception e) {
 					throw new RuntimeException(e);
 				}
@@ -28,6 +28,6 @@ public class MainTest
 		}.start();
 
 		Thread.sleep(1000);
-		Main.shutdown();
+		MainServer.shutdown();
 	}
 }

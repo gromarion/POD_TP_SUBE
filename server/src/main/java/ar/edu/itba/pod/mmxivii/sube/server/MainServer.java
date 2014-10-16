@@ -10,13 +10,13 @@ import java.util.Scanner;
 
 import static ar.edu.itba.pod.mmxivii.sube.common.Utils.*;
 
-public class Main extends BaseMain
+public class MainServer extends BaseMain
 {
-	private static Main main = null;
+	private static MainServer main = null;
 	private final CardRegistryImpl cardRegistry;
 	private final String storeFile;
 
-	private Main(@Nonnull String[] args) throws RemoteException
+	private MainServer(@Nonnull String[] args) throws RemoteException
 	{
 		super(args, OPTIONS_CONFIG);
 		getRegistry();
@@ -29,7 +29,7 @@ public class Main extends BaseMain
 
 	public static void main(@Nonnull String[] args) throws Exception
 	{
-		main = new Main(args);
+		main = new MainServer(args);
 		main.run();
 	}
 
