@@ -1,8 +1,10 @@
-package ar.edu.itba.pod.mmxivii.sube.server;
+package ar.edu.itba.pod.mmxivii.sube.test;
 
 import java.rmi.server.UID;
 import java.util.HashMap;
 import java.util.Map;
+
+import ar.edu.itba.pod.mmxivii.sube.entity.UserData;
 
 public class TestRepo {
 

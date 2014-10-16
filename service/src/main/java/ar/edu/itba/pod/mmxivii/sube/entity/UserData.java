@@ -1,4 +1,4 @@
-package ar.edu.itba.pod.mmxivii.sube.server;
+package ar.edu.itba.pod.mmxivii.sube.entity;
 
 import java.io.Serializable;
 import java.rmi.server.UID;
