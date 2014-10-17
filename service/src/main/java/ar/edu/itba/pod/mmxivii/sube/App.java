@@ -1,6 +1,5 @@
 package ar.edu.itba.pod.mmxivii.sube;
 
-import ar.edu.itba.pod.mmxivii.sube.entity.Cache;
 
 public class App {
 

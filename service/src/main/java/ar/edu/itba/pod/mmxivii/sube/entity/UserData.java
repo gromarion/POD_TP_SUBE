@@ -1,31 +1,24 @@
 package ar.edu.itba.pod.mmxivii.sube.entity;
 
-import java.io.Serializable;
-import java.rmi.server.UID;
+public class UserData {
 
-public class UserData implements Serializable {
-
-	private static final long serialVersionUID = 1L;
-	private UID id;
 	private double balance;
-	private boolean updated;
 
-	public UserData(UID id, double balance) {
-		this.id = id;
-		this.balance = balance;
-		this.updated = true;
+	public UserData() {
+		this(0f);
 	}
 
-	public UID userId() {
-		return id;
+	public UserData(double balance) {
+		this.balance = balance;
 	}
 
 	public double balance() {
 		return balance;
 	}
-	
-	public boolean isUpdated() {
-		return updated;
+
+	public UserData setBalance(double balance) {
+		this.balance = balance;
+		return this;
 	}
 
 	public boolean substractAmount(double amount) {

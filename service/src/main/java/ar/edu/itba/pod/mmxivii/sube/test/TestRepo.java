@@ -24,7 +24,7 @@ public class TestRepo {
 	public double getBalance(UID id) {
 		delay();
 		if (!user_data.containsKey(id))
-			user_data.put(id, new UserData(id, 10));
+			user_data.put(id, new UserData(10));
 		return user_data.get(id).balance();
 	}
 

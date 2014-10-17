@@ -16,23 +16,29 @@ public class CardServiceImpl extends UnicastRemoteObject implements CardService 
 	@Nonnull
 	private final CardRegistry cardRegistry;
 
-	public CardServiceImpl(@Nonnull CardRegistry cardRegistry) throws RemoteException {
+	private CardService _delegate;
+
+	public CardServiceImpl(@Nonnull CardRegistry cardRegistry, CardService delegate) throws RemoteException {
 		super(0);
 		this.cardRegistry = cardRegistry;
+		_delegate = delegate;
 	}
 
 	@Override
 	public double getCardBalance(@Nonnull UID id) throws RemoteException {
-		return cardRegistry.getCardBalance(id);
+//		return cardRegistry.getCardBalance(id);
+		return _delegate.getCardBalance(id);
 	}
 
 	@Override
 	public double travel(@Nonnull UID id, @Nonnull String description, double amount) throws RemoteException {
-		return cardRegistry.addCardOperation(id, description, amount * -1);
+//		return cardRegistry.addCardOperation(id, description, amount * -1);
+		return _delegate.travel(id, description, amount);
 	}
 
 	@Override
 	public double recharge(@Nonnull UID id, @Nonnull String description, double amount) throws RemoteException {
-		return cardRegistry.addCardOperation(id, description, amount);
+//		return cardRegistry.addCardOperation(id, description, amount);
+		return _delegate.recharge(id, description, amount);
 	}
 }
