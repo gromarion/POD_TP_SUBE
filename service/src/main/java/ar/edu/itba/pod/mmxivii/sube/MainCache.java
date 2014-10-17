@@ -1,19 +1,19 @@
 package ar.edu.itba.pod.mmxivii.sube;
 
-import ar.edu.itba.pod.mmxivii.sube.common.BaseMain;
-import ar.edu.itba.pod.mmxivii.sube.common.CardRegistry;
-import ar.edu.itba.pod.mmxivii.sube.common.CardServiceRegistry;
-import ar.edu.itba.pod.mmxivii.sube.common.Utils;
-import ar.edu.itba.pod.mmxivii.sube.service.CardServiceImpl;
-
-import javax.annotation.Nonnull;
+import static ar.edu.itba.pod.mmxivii.sube.common.Utils.CARD_REGISTRY_BIND;
+import static ar.edu.itba.pod.mmxivii.sube.common.Utils.CARD_SERVICE_REGISTRY_BIND;
 
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.util.Scanner;
 
-import static ar.edu.itba.pod.mmxivii.sube.common.Utils.CARD_REGISTRY_BIND;
-import static ar.edu.itba.pod.mmxivii.sube.common.Utils.CARD_SERVICE_REGISTRY_BIND;
+import javax.annotation.Nonnull;
+
+import ar.edu.itba.pod.mmxivii.sube.common.BaseMain;
+import ar.edu.itba.pod.mmxivii.sube.common.CardRegistry;
+import ar.edu.itba.pod.mmxivii.sube.common.CardServiceRegistry;
+import ar.edu.itba.pod.mmxivii.sube.common.Utils;
+import ar.edu.itba.pod.mmxivii.sube.service.CardServiceImpl;
 
 public class MainCache extends BaseMain {
 	private final CardServiceRegistry cardServiceRegistry;

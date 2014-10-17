@@ -11,11 +11,11 @@ import java.util.Scanner;
 
 import static ar.edu.itba.pod.mmxivii.sube.common.Utils.*;
 
-public class Main extends BaseMain
+public class MainBalancer extends BaseMain
 {
-	private static Main main = null;
+	private static MainBalancer main = null;
 
-	private Main(@Nonnull String[] args) throws RemoteException, NotBoundException
+	private MainBalancer(@Nonnull String[] args) throws RemoteException, NotBoundException
 	{
 		super(args, DEFAULT_CLIENT_OPTIONS);
 		getRegistry();
@@ -30,7 +30,7 @@ public class Main extends BaseMain
 
 	public static void main(@Nonnull String[] args) throws Exception
 	{
-		main = new Main(args);
+		main = new MainBalancer(args);
 		main.run();
 	}
 

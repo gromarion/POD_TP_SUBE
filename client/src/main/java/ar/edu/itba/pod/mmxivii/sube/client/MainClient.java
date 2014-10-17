@@ -1,22 +1,22 @@
 package ar.edu.itba.pod.mmxivii.sube.client;
 
+import static ar.edu.itba.pod.mmxivii.sube.common.Utils.CARD_CLIENT_BIND;
+
+import java.rmi.NotBoundException;
+import java.rmi.RemoteException;
+
+import javax.annotation.Nonnull;
+
 import ar.edu.itba.pod.mmxivii.sube.common.BaseMain;
 import ar.edu.itba.pod.mmxivii.sube.common.Card;
 import ar.edu.itba.pod.mmxivii.sube.common.CardClient;
 import ar.edu.itba.pod.mmxivii.sube.common.Utils;
 
-import javax.annotation.Nonnull;
-
-import java.rmi.NotBoundException;
-import java.rmi.RemoteException;
-
-import static ar.edu.itba.pod.mmxivii.sube.common.Utils.*;
-
-public class Main extends BaseMain
+public class MainClient extends BaseMain
 {
 	private CardClient cardClient = null;
 
-	private Main(@Nonnull String[] args) throws NotBoundException
+	private MainClient(@Nonnull String[] args) throws NotBoundException
 	{
 		super(args, DEFAULT_CLIENT_OPTIONS);
 		getRegistry();
@@ -25,7 +25,7 @@ public class Main extends BaseMain
 
 	public static void main(@Nonnull String[] args ) throws Exception
 	{
-		final Main main = new Main(args);
+		final MainClient main = new MainClient(args);
 		main.run();
 	}
 
