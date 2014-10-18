@@ -1,16 +1,35 @@
+#define MEGA_OBJECT = cache
+
 Casos de uso:
 
-¿¿¿QUE ONDA CON LOS CÓDIGOS DE ERROR QUE PUEDA DEVOLVER EL SERVER (RECORDAR QUE ES LENTO Y CHOTO)???
+1) Se conecta un cache nuevo:
+	- Le solicita a alguno de los otros cache toda la información que tenga 
+	  (Megaobject).
+	- Se da de alta ante el balancer.
 
-1) El cache no tiene los datos del usuario solicitado:
-	a) El cache le informa al resto de los caches acerca de la operación que está por realizar.
-	b) El cache le envía al server el método 'addCardOperation', el cache recibe lo que el server le envíe, y le asigna a un mapa privado <UID, UserData> el valor devuelto.
-	c) Replica la información.
+2) Balancer:
+	- Se implementará como un round robin.
+	- Se mantendrá un SET de UID's:
+		Cuando le llega un request al balancer, agrega el UID del request en el
+		set, y lo delega a un nodo. Cuando el nodo contesta al balancer que 
+		terminó la operación, el balancer remueve ese UID del set. Si le llega
+		un request al balancer para un UID, y en el SET tiene ese UID guardado,
+		se disparará un error.
 
-2) El cache tiene los datos del usuario solicitado:
-	a) Los levanta del mapa.
-	b) Opera sobre ellos.
-	c) Replica la info.
-
-3) Un cache replica sus operaciones a realizar entre todos los otros caches:
-	a) 
+3) Cache synchronizer:
+	Es una entidad que le solicita a un cache cualquiera toda la información que
+	tenga, y se encarga de descargarlo en el servidor. ¿Cómo se hace esto? 
+	Explicación:
+	  - Se decide entre todos los synchronizers quién es el que va a solicitar 
+	    información a uno de los cachés y la descargará. Esto se logrará enviando un
+	    número aleatorio en el canal, y se seleccionará como synchronizer al que tenga
+	    el más alto.
+	  - Ese le enviará un mensaje a todos en el canal pidiendo el tipo de cada uno. El
+	    primero que conteste que es de tipo cache, será el seleccionado para solicitar
+	    información y usarla para replicarla en el servidor.
+	  - Una vez que el synchronizer haya replicado la información, le enviará ese
+	    MEGAOBJECT a todos los caches del canal para que ellos eliminen esa
+	    información de su memoria.
+	  - Cada nodo sabrá si tiene que eliminar o no la información si el timestamp de
+	    la operación contenida en el MEGAOBJECT coincide con la que tiene él para un
+	    usuario determinado.
