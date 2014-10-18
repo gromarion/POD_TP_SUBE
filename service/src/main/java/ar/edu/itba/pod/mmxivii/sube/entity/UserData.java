@@ -1,37 +1,33 @@
 package ar.edu.itba.pod.mmxivii.sube.entity;
 
+import java.util.List;
+
+import com.google.common.collect.Lists;
+
 public class UserData {
 
-	private double balance;
-
-	public UserData() {
-		this(0f);
-	}
-
-	public UserData(double balance) {
-		this.balance = balance;
-	}
+	private double _balance;
+	private final List<Operation> _operations = Lists.newLinkedList();
 
 	public double balance() {
-		return balance;
+		return _balance;
 	}
 
 	public UserData setBalance(double balance) {
-		this.balance = balance;
+		_balance = balance;
 		return this;
 	}
 
-	public boolean substractAmount(double amount) {
-		if (this.balance > amount) {
-			this.balance -= amount;
-			return true;
-		}
-		return false;
+	public List<Operation> operations() {
+		return _operations;
 	}
 
-	public boolean addAmount(double amount) {
-		this.balance += amount;
-		return true; // TODO: Remember to validate that 'amount' should only
-						// have 2 decimals (argentinian cents)!!!
+	public UserData addBalance(double amount) {
+		return setBalance(balance() + amount);
 	}
+
+	public UserData substractBalance(double amount) {
+		return setBalance(balance() - amount);
+	}
+
 }
