@@ -2,12 +2,12 @@
 
 Casos de uso:
 
-1) Se conecta un cache nuevo:
+1) Se conecta un cache nuevo (Facundo):
 	- Le solicita a alguno de los otros cache toda la información que tenga 
 	  (Megaobject).
 	- Se da de alta ante el balancer.
 
-2) Balancer:
+2) Balancer (Gonzalo):
 	- Se implementará como un round robin.
 	- Se mantendrá un SET de UID's:
 		Cuando le llega un request al balancer, agrega el UID del request en el
@@ -16,7 +16,7 @@ Casos de uso:
 		un request al balancer para un UID, y en el SET tiene ese UID guardado,
 		se disparará un error.
 
-3) Cache synchronizer:
+3) Cache synchronizer (Germán):
 	Es una entidad que le solicita a un cache cualquiera toda la información que
 	tenga, y se encarga de descargarlo en el servidor. ¿Cómo se hace esto? 
 	Explicación:
