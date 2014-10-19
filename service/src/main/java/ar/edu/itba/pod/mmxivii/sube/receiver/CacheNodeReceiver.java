@@ -1,14 +1,5 @@
 package ar.edu.itba.pod.mmxivii.sube.receiver;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Predicates.and;
-
-import java.rmi.RemoteException;
-import java.rmi.server.UID;
-
-import org.jgroups.Message;
-import org.jgroups.ReceiverAdapter;
-
 import ar.edu.itba.pod.mmxivii.jgroups.ClusterNode;
 import ar.edu.itba.pod.mmxivii.sube.common.CardRegistry;
 import ar.edu.itba.pod.mmxivii.sube.common.CardService;
@@ -19,9 +10,18 @@ import ar.edu.itba.pod.mmxivii.sube.entity.UserData;
 import ar.edu.itba.pod.mmxivii.sube.predicate.OnlyDigitsAndLetters;
 import ar.edu.itba.pod.mmxivii.sube.predicate.PositiveDouble;
 import ar.edu.itba.pod.mmxivii.sube.predicate.TwoDecimalPlacesAndLessThan100;
-
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
+import org.jgroups.Address;
+import org.jgroups.Message;
+import org.jgroups.ReceiverAdapter;
+
+import java.rmi.RemoteException;
+import java.rmi.server.UID;
+import java.util.List;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Predicates.and;
 
 public class CacheNodeReceiver extends ReceiverAdapter implements CardService {
 
@@ -30,10 +30,17 @@ public class CacheNodeReceiver extends ReceiverAdapter implements CardService {
 	private final ClusterNode _node;
 	private CardRegistry _server;
 	private final CachedData _cachedData = new CachedData();
+    private boolean _online = false;
 
 	public CacheNodeReceiver(ClusterNode node, CardRegistry server) {
 		_node = checkNotNull(node);
 		_server = checkNotNull(server);
+
+        List<Address> members = _node.channel().getView().getMembers();
+        //si no soy en único
+        if(members.size() > 1){
+            node().sendObject(CacheFirstSync.newSyncRequest());
+        }
 	}
 
 	public final ClusterNode node() {
@@ -68,7 +75,25 @@ public class CacheNodeReceiver extends ReceiverAdapter implements CardService {
 			default:
 				throw new IllegalStateException("Unknown type: " + cacheUpdateRequest.type());
 			}
-		}
+		}else if(object instanceof CacheFirstSync){
+            CacheFirstSync cacheFirstSync = (CacheFirstSync) object;
+            switch (cacheFirstSync.status()){
+                case REQUEST:
+                    if(_online){
+                        node().sendObject(CacheFirstSync.newSyncResponse(this._cachedData));
+                    }
+                    break;
+                case RESPONSE:
+                    if(!_online){
+                        _cachedData.syncDataFrom(cacheFirstSync.cachedData());
+                        //TODO: acá habría que registrarse con el balancer.
+                        _online = true;
+                    }
+                    break;
+                default:
+                    throw new IllegalStateException("Unknown status: " + cacheFirstSync.status());
+            }
+        }
 	}
 
 	@Override

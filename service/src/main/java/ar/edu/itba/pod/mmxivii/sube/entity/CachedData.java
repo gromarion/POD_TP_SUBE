@@ -1,13 +1,13 @@
 package ar.edu.itba.pod.mmxivii.sube.entity;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import com.google.common.base.Optional;
+import com.google.common.collect.Maps;
 
 import java.rmi.server.UID;
 import java.util.Map;
 
-import com.google.common.base.Optional;
-import com.google.common.collect.Maps;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public class CachedData {
 
@@ -27,4 +27,8 @@ public class CachedData {
 		return this;
 	}
 
+    public void syncDataFrom(CachedData cachedData){
+        _userdatas.clear();
+        _userdatas.putAll(cachedData._userdatas);
+    }
 }
