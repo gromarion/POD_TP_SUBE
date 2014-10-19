@@ -1,6 +1,5 @@
 package ar.edu.itba.pod.mmxivii.sube.entity;
 
-import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -18,7 +17,7 @@ public class UserData {
 		return this;
 	}
 
-	public List<Operation> operations() {
+	public Set<Operation> operations() {
 		return _operations;
 	}
 
@@ -29,5 +28,4 @@ public class UserData {
 	public UserData substractBalance(double amount) {
 		return setBalance(balance() - amount);
 	}
-
 }
