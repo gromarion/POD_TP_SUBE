@@ -5,6 +5,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.rmi.server.UID;
 import java.util.Map;
+import java.util.Set;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.Maps;
@@ -13,6 +14,10 @@ public class CachedData {
 
 	private final Map<UID, UserData> _userdatas = Maps.newHashMap();
 
+	public Set<UID> getUsers() {
+		return _userdatas.keySet();
+	}
+	
 	public UserData get(UID uid) {
 		return checkNotNull(_userdatas.get(uid));
 	}

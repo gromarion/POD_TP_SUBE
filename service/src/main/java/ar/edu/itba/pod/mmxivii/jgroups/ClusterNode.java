@@ -1,5 +1,7 @@
 package ar.edu.itba.pod.mmxivii.jgroups;
 
+import java.util.List;
+
 import org.jgroups.Address;
 import org.jgroups.JChannel;
 import org.jgroups.Message;
@@ -77,5 +79,8 @@ public class ClusterNode {
 		JChannels.send(channel(), message);
 		return this;
 	}
-
+	
+	public List<Address> members() {
+		return channel().getView().getMembers();
+	}
 }
