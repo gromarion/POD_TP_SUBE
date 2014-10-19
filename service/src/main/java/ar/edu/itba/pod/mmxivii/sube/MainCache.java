@@ -1,14 +1,5 @@
 package ar.edu.itba.pod.mmxivii.sube;
 
-import static ar.edu.itba.pod.mmxivii.sube.common.Utils.CARD_REGISTRY_BIND;
-import static ar.edu.itba.pod.mmxivii.sube.common.Utils.CARD_SERVICE_REGISTRY_BIND;
-
-import java.rmi.NotBoundException;
-import java.rmi.RemoteException;
-import java.util.Scanner;
-
-import javax.annotation.Nonnull;
-
 import ar.edu.itba.pod.mmxivii.jgroups.ClusterNode;
 import ar.edu.itba.pod.mmxivii.sube.common.BaseMain;
 import ar.edu.itba.pod.mmxivii.sube.common.CardRegistry;

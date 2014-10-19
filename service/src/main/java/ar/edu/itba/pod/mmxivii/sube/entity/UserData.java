@@ -1,13 +1,13 @@
 package ar.edu.itba.pod.mmxivii.sube.entity;
 
 import java.util.List;
-
-import com.google.common.collect.Lists;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class UserData {
 
 	private double _balance;
-	private final List<Operation> _operations = Lists.newLinkedList();
+	private final Set<Operation> _operations = new TreeSet<Operation>();
 
 	public double balance() {
 		return _balance;

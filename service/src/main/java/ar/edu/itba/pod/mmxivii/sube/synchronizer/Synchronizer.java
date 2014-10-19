@@ -2,6 +2,7 @@ package ar.edu.itba.pod.mmxivii.sube.synchronizer;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.rmi.RemoteException;
 import java.rmi.server.UID;
 import java.util.Date;
 import java.util.HashMap;
@@ -13,8 +14,11 @@ import org.jgroups.Message;
 import org.jgroups.ReceiverAdapter;
 
 import ar.edu.itba.pod.mmxivii.jgroups.ClusterNode;
+import ar.edu.itba.pod.mmxivii.sube.common.CardRegistry;
 import ar.edu.itba.pod.mmxivii.sube.entity.CachedData;
+import ar.edu.itba.pod.mmxivii.sube.entity.Operation;
 import ar.edu.itba.pod.mmxivii.sube.receiver.CacheNodeReceiver;
+import ar.edu.itba.pod.mmxivii.sube.receiver.CacheSync;
 
 public class Synchronizer extends ReceiverAdapter {
 
@@ -23,12 +27,14 @@ public class Synchronizer extends ReceiverAdapter {
 	private boolean _votation_is_on;
 	private Date _last_vote;
 	private ClusterNode _node;
+	private CardRegistry _server;
 	private static final int START_VOTATION = -1;
 	private static final int GET_NODE_TYPE = -2;
 
-	public Synchronizer(ClusterNode node) {
+	public Synchronizer(ClusterNode node, CardRegistry server) {
 		_votes = new HashMap<Integer, Address>();
 		_node = checkNotNull(node);
+		_server = server;
 	}
 
 	public void vote(boolean this_started_to_vote) {
@@ -90,12 +96,19 @@ public class Synchronizer extends ReceiverAdapter {
 	}
 
 	private void getDataFromNode(Address node_address) {
-		node().sendObject(node_address, object)
+		node().sendObject(node_address, object);
 	}
 	
 	private void updateServer(CachedData cached_data) {
 		for (UID uid : cached_data.getUsers()) {
-			cached_data.get(uid).
+			for (Operation operation : cached_data.get(uid).operations()) {
+				try {
+					_server.addCardOperation(uid, operation.type().toString(), operation.amount());
+				} catch (RemoteException e) {
+					e.printStackTrace();
+				}				
+			}
 		}
+		node().sendObject(CacheSync.newSyncUpdate(cached_data));
 	}
 }
