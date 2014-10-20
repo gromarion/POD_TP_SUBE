@@ -5,7 +5,6 @@ import ar.edu.itba.pod.mmxivii.sube.common.CardRegistry;
 import ar.edu.itba.pod.mmxivii.sube.common.CardService;
 import ar.edu.itba.pod.mmxivii.sube.entity.CachedData;
 import ar.edu.itba.pod.mmxivii.sube.entity.Operation;
-import ar.edu.itba.pod.mmxivii.sube.entity.Operation.OperationType;
 import ar.edu.itba.pod.mmxivii.sube.entity.UserData;
 import ar.edu.itba.pod.mmxivii.sube.predicate.OnlyDigitsAndLetters;
 import ar.edu.itba.pod.mmxivii.sube.predicate.PositiveDouble;
@@ -85,7 +84,7 @@ public class CacheNodeReceiver extends ReceiverAdapter implements CardService {
                     break;
                 case RESPONSE:
                     if(!_online) {
-                        _cachedData.syncDataFrom(cacheFirstSync.cachedData());
+//                        _cachedData.syncDataFrom(cacheFirstSync.cachedData());
                         //TODO: acá habría que registrarse con el balancer.
                         _online = true;
                     }
@@ -95,6 +94,21 @@ public class CacheNodeReceiver extends ReceiverAdapter implements CardService {
             }
         }
 	}
+
+    //TODO: esto necesita un code review
+    private void syncDataFrom(CachedData cachedDataFrom){
+        for(UID uid : cachedDataFrom.getUsers()){
+            UserData userDataFrom = cachedDataFrom.get(uid);
+            for(Operation operation : userDataFrom.operations()){
+                Optional<UserData> userData = _cachedData.tryGet(uid);
+                if (!userData.isPresent()) {
+                    _cachedData.put(uid, userDataFrom);
+                }else{
+                    userData.get().syncOperation(operation);
+                }
+            }
+        }
+    }
 
 	@Override
 	public double getCardBalance(UID id) throws RemoteException {

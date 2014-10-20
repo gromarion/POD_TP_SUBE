@@ -31,9 +31,4 @@ public class CachedData {
 		checkArgument(previous == null);
 		return this;
 	}
-
-    public void syncDataFrom(CachedData cachedData){
-        _userdatas.clear();
-        _userdatas.putAll(cachedData._userdatas);
-    }
 }
