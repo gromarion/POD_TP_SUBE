@@ -3,6 +3,8 @@ package ar.edu.itba.pod.mmxivii.sube.entity;
 import java.util.Set;
 import java.util.TreeSet;
 
+import ar.edu.itba.pod.mmxivii.sube.entity.Operation.OperationType;
+
 public class UserData {
 
 	private double _balance;
@@ -21,11 +23,17 @@ public class UserData {
 		return _operations;
 	}
 
-	public UserData addBalance(double amount) {
-		return setBalance(balance() + amount);
+	public UserData addBalance(String description, double amount) {
+		synchronized (_operations) {
+			_operations.add(new Operation(OperationType.RECHARGE, description, amount));
+			return setBalance(balance() + amount);			
+		}
 	}
 
-	public UserData substractBalance(double amount) {
-		return setBalance(balance() - amount);
+	public UserData substractBalance(String description, double amount) {
+		synchronized (_operations) {
+			_operations.add(new Operation(OperationType.TRAVEL, description, -amount));
+			return setBalance(balance() - amount);			
+		}
 	}
 }

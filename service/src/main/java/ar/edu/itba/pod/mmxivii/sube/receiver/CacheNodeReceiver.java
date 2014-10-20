@@ -136,8 +136,7 @@ public class CacheNodeReceiver extends ReceiverAdapter implements CardService {
 	}
 
 	private void addTravel(UID id, String description, double amount, UserData userdata) {
-		userdata.substractBalance(amount);
-		userdata.operations().add(new Operation(OperationType.TRAVEL, description, -amount));
+		userdata.substractBalance(description, amount);
 	}
 
 	@Override
@@ -159,8 +158,6 @@ public class CacheNodeReceiver extends ReceiverAdapter implements CardService {
 	}
 
 	private void addrecharge(UID id, String description, double amount, UserData userdata) {
-		userdata.addBalance(amount);
-		userdata.operations().add(new Operation(OperationType.RECHARGE, description, amount));
+		userdata.addBalance(description, amount);
 	}
-
 }
