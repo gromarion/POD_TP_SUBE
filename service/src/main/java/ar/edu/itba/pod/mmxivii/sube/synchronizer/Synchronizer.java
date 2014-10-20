@@ -4,7 +4,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.rmi.RemoteException;
 import java.rmi.server.UID;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -24,11 +26,12 @@ public class Synchronizer extends ReceiverAdapter {
 
 	private Map<Integer, Address> _votes;
 	private double _selected_number;
-	private Date _last_vote;
+	private int _last_vote;
 	private ClusterNode _node;
 	private CardRegistry _server;
 	private static final int START_VOTATION = -1;
 	private static final int GET_NODE_TYPE = -2;
+	private static final int MAX_SECONDS_WITHOUT_VOTING = 15;
 
 	public Synchronizer(ClusterNode node, CardRegistry server) {
 		_votes = new HashMap<Integer, Address>();
@@ -37,7 +40,7 @@ public class Synchronizer extends ReceiverAdapter {
 	}
 
 	public void vote(boolean this_started_to_vote) {
-		_last_vote = new Date();
+		_last_vote = Calendar.getInstance().get(Calendar.SECOND);
 		_selected_number = new Random().nextInt(Integer.MAX_VALUE);
 		if (this_started_to_vote)
 			node().sendObject(-1);
@@ -55,9 +58,8 @@ public class Synchronizer extends ReceiverAdapter {
 				node().sendObject(msg.getSrc(), getClass());
 			else if (!addVote(msg))
 				node().sendObject(-1);
-			else
-				if (_votes.keySet().size() == node().members().size() - 1)
-					askDataToUpdateIfCoordinator();
+			else if (_votes.keySet().size() == node().members().size() - 1)
+				askDataToUpdateIfCoordinator();
 		} else if (msg.getObject() instanceof CacheNodeReceiver)
 			getDataFromNode(msg.getSrc());
 		else if (msg.getObject() instanceof CachedData)
@@ -104,5 +106,9 @@ public class Synchronizer extends ReceiverAdapter {
 			}
 		}
 		node().sendObject(CacheSync.newSyncUpdate(cached_data));
+	}
+
+	private boolean mustVoteAgain() {
+		return Calendar.getInstance().get(Calendar.SECOND) - _last_vote < MAX_SECONDS_WITHOUT_VOTING;
 	}
 }
