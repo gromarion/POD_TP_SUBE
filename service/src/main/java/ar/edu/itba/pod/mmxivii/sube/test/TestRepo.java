@@ -31,14 +31,14 @@ public class TestRepo {
 	public double travel(UID id, double amount) {
 		delay();
 		UserData data = user_data.get(id);
-		data.substractBalance(amount);
+		data.substractBalance("sub", amount);
 		return data.balance();
 	}
 
 	public double recharge(UID id, double amount) {
 		delay();
 		UserData data = user_data.get(id);
-		data.addBalance(amount);
+		data.addBalance("add", amount);
 		return data.balance();
 	}
 

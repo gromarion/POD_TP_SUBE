@@ -1,42 +1,49 @@
 package ar.edu.itba.pod.mmxivii.sube.receiver;
 
-import ar.edu.itba.pod.mmxivii.sube.entity.CachedData;
-
 import java.io.Serializable;
 
-public class CacheSync implements Serializable{
+import ar.edu.itba.pod.mmxivii.sube.entity.CachedData;
 
-    private static final long serialVersionUID = 1L;
+public class CacheSync implements Serializable {
 
-    public static enum SyncStatus {
-        REQUEST, RESPONSE, UPDATE
-    };
+	private static final long serialVersionUID = 1L;
 
-    public static CacheSync newSyncRequest() {
-        return new CacheSync(null, SyncStatus.REQUEST);
-    }
+	public static enum SyncStatus {
+		REQUEST, RESPONSE, UPDATE
+	};
 
-    public static CacheSync newSyncResponse(CachedData cachedData) {
-        return new CacheSync(cachedData, SyncStatus.RESPONSE);
-    }
-    
-    public static CacheSync newSyncUpdate(CachedData cachedData) {
-    	return new CacheSync(cachedData, SyncStatus.UPDATE);
-    }
+	public static CacheSync newSyncRequest() {
+		return new CacheSync(null, SyncStatus.REQUEST);
+	}
 
-    public CacheSync(CachedData cachedData, SyncStatus status) {
-        this._cachedData = cachedData;
-        this._status = status;
-    }
+	public static CacheSync newSyncResponse(CachedData cachedData) {
+		return new CacheSync(cachedData, SyncStatus.RESPONSE);
+	}
 
-    private final CachedData _cachedData;
-    private final SyncStatus _status;
+	// FIXME: este es necesario?
+	public static CacheSync newSyncUpdate(CachedData cachedData) {
+		return new CacheSync(cachedData, SyncStatus.UPDATE);
+	}
 
-    public CachedData cachedData() {
-        return _cachedData;
-    }
+	private final CachedData _cachedData;
+	private final SyncStatus _status;
 
-    public SyncStatus status() {
-        return _status;
-    }
+	public CacheSync() {
+		// Serialization required constructor
+		_cachedData = null;
+		_status = null;
+	}
+
+	public CacheSync(CachedData cachedData, SyncStatus status) {
+		_cachedData = cachedData;
+		_status = status;
+	}
+
+	public CachedData data() {
+		return _cachedData;
+	}
+
+	public SyncStatus status() {
+		return _status;
+	}
 }
