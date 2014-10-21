@@ -24,12 +24,13 @@ public class MainCache extends BaseMain {
 		final CardRegistry server = Utils
 				.lookupObject(Utils.CARD_REGISTRY_BIND);
 		ClusterNode node = new ClusterNode().setName("node_1");
-		CacheNodeReceiver nodeReceiver = new CacheNodeReceiver(node, server);
-		node.setReceiver(nodeReceiver).connectTo("cluster");
-		CardServiceImpl cardService = new CardServiceImpl(server, nodeReceiver);
 		// ???
 		CardServiceRegistry cardServiceRegistry = Utils
 				.lookupObject(Utils.CARD_SERVICE_REGISTRY_BIND);
+		CacheNodeReceiver nodeReceiver = new CacheNodeReceiver(node, server,
+				cardServiceRegistry);
+		CardServiceImpl cardService = new CardServiceImpl(server, nodeReceiver);
+		node.setReceiver(nodeReceiver).connectTo("cluster");
 		cardServiceRegistry.registerService(cardService);
 	}
 
@@ -46,6 +47,7 @@ public class MainCache extends BaseMain {
 			line = scan.next();
 			System.out.println("Service running");
 		} while (!"x".equals(line));
+		scan.close();
 		System.out.println("Service exit.");
 		scan.close();
 		System.exit(0);

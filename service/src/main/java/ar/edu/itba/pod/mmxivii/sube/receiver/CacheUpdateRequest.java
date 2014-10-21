@@ -28,6 +28,14 @@ public class CacheUpdateRequest implements Serializable {
 	private final double _balance;
 	private String _description;
 
+	public CacheUpdateRequest() {
+		// Serialization required constructor
+		_id = null;
+		_type = null;
+		_balance = 0;
+		_description = null;
+	}
+
 	public CacheUpdateRequest(UID id, RequestOperationType type, double balance) {
 		_id = id;
 		_type = type;

@@ -41,22 +41,22 @@ public class Synchronizer extends ReceiverAdapter {
 		_last_vote = Calendar.getInstance().get(Calendar.SECOND);
 		_selected_number = new Random().nextInt(Integer.MAX_VALUE);
 		if (this_started_to_vote)
-			node().sendObject(-1);
-		node().sendObject(_selected_number);
+			_node.sendObject(-1);
+		_node.sendObject(_selected_number);
 	}
 
 	@Override
 	public void receive(Message msg) {
-		if (msg.getSrc().equals(node().address()))
+		if (msg.getSrc().equals(_node.address()))
 			return;
 		if (msg.getObject() instanceof Integer) {
 			if ((Integer) msg.getObject() == START_VOTATION)
 				vote(false);
 			else if ((Integer) msg.getObject() == GET_NODE_TYPE)
-				node().sendObject(msg.getSrc(), getClass());
+				_node.sendObject(msg.getSrc(), getClass());
 			else if (!addVote(msg))
-				node().sendObject(-1);
-			else if (_votes.keySet().size() == node().members().size() - 1)
+				_node.sendObject(-1);
+			else if (_votes.keySet().size() == _node.members().size() - 1)
 				askDataToUpdateIfCoordinator();
 		} else if (msg.getObject() instanceof CacheNodeReceiver)
 			getDataFromNode(msg.getSrc());
@@ -64,8 +64,8 @@ public class Synchronizer extends ReceiverAdapter {
 			updateServer((CachedData) msg.getObject());
 	}
 
-	public final ClusterNode node() {
-		return _node;
+	public boolean mustVoteAgain() {
+		return Calendar.getInstance().get(Calendar.SECOND) - _last_vote < MAX_SECONDS_WITHOUT_VOTING;
 	}
 
 	private boolean addVote(Message msg) {
@@ -80,16 +80,16 @@ public class Synchronizer extends ReceiverAdapter {
 		double max_number = 0;
 		for (Integer vote : _votes.keySet())
 			max_number = vote > max_number ? vote : max_number;
-		if (_votes.get(max_number).equals(node().address()))
+		if (_votes.get(max_number).equals(_node.address()))
 			askEveryOneTheirType();
 	}
 
 	private void askEveryOneTheirType() {
-		node().sendObject(GET_NODE_TYPE);
+		_node.sendObject(GET_NODE_TYPE);
 	}
 
 	private void getDataFromNode(Address node_address) {
-		node().sendObject(node_address, CacheSync.newSyncRequest());
+		_node.sendObject(node_address, CacheSync.newSyncRequest());
 	}
 
 	private void updateServer(CachedData cached_data) {
@@ -103,10 +103,6 @@ public class Synchronizer extends ReceiverAdapter {
 				}
 			}
 		}
-		node().sendObject(CacheSync.newSyncUpdate(cached_data));
-	}
-
-	private boolean mustVoteAgain() {
-		return Calendar.getInstance().get(Calendar.SECOND) - _last_vote < MAX_SECONDS_WITHOUT_VOTING;
+		_node.sendObject(CacheSync.newSyncUpdate(cached_data));
 	}
 }

@@ -1,27 +1,33 @@
 package ar.edu.itba.pod.mmxivii.sube.receiver;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Predicates.and;
+import static com.google.common.base.Predicates.equalTo;
+import static com.google.common.base.Predicates.not;
+import static com.google.common.collect.Iterables.find;
+
+import java.rmi.RemoteException;
+import java.rmi.server.UID;
+
+import org.jgroups.Address;
+import org.jgroups.Message;
+import org.jgroups.ReceiverAdapter;
+import org.jgroups.View;
+
 import ar.edu.itba.pod.mmxivii.jgroups.ClusterNode;
 import ar.edu.itba.pod.mmxivii.sube.common.CardRegistry;
 import ar.edu.itba.pod.mmxivii.sube.common.CardService;
+import ar.edu.itba.pod.mmxivii.sube.common.CardServiceRegistry;
 import ar.edu.itba.pod.mmxivii.sube.entity.CachedData;
-import ar.edu.itba.pod.mmxivii.sube.entity.Operation;
-import ar.edu.itba.pod.mmxivii.sube.entity.Operation.OperationType;
 import ar.edu.itba.pod.mmxivii.sube.entity.UserData;
 import ar.edu.itba.pod.mmxivii.sube.predicate.OnlyDigitsAndLetters;
 import ar.edu.itba.pod.mmxivii.sube.predicate.PositiveDouble;
 import ar.edu.itba.pod.mmxivii.sube.predicate.TwoDecimalPlacesAndLessThan100;
+import ar.edu.itba.pod.mmxivii.sube.service.CardServiceImpl;
+
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
-import org.jgroups.Address;
-import org.jgroups.Message;
-import org.jgroups.ReceiverAdapter;
-
-import java.rmi.RemoteException;
-import java.rmi.server.UID;
-import java.util.List;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Predicates.and;
 
 public class CacheNodeReceiver extends ReceiverAdapter implements CardService {
 
@@ -29,18 +35,14 @@ public class CacheNodeReceiver extends ReceiverAdapter implements CardService {
 	private final Predicate<String> _descValidator = new OnlyDigitsAndLetters();
 	private final ClusterNode _node;
 	private CardRegistry _server;
+	private CardServiceRegistry _balancerRegistry;
 	private final CachedData _cachedData = new CachedData();
-    private boolean _online = false;
+	private boolean _syncronized = false;
 
-	public CacheNodeReceiver(ClusterNode node, CardRegistry server) {
+	public CacheNodeReceiver(ClusterNode node, CardRegistry server, CardServiceRegistry balancerRegistry) {
 		_node = checkNotNull(node);
 		_server = checkNotNull(server);
-
-        List<Address> members = _node.channel().getView().getMembers();
-        //si no soy en único
-        if(members.size() > 1){
-            node().sendObject(CacheSync.newSyncRequest());
-        }
+		_balancerRegistry = checkNotNull(balancerRegistry);
 	}
 
 	public final ClusterNode node() {
@@ -49,6 +51,31 @@ public class CacheNodeReceiver extends ReceiverAdapter implements CardService {
 
 	public final CardRegistry server() {
 		return _server;
+	}
+
+	@Override
+	public void viewAccepted(View view) {
+		if (!_syncronized) {
+			if (view.getMembers().size() > 1) {
+				Address syncAddres = find(view.getMembers(), not(equalTo(node().address())));
+				System.out.println(node().name() + " enviando request de sync a " + syncAddres);
+				node().sendObject(syncAddres, CacheSync.newSyncRequest());
+			} else {
+				_syncronized = true;
+				registerWithBalancer();
+			}
+		}
+	}
+
+	private void registerWithBalancer() {
+		checkArgument(_syncronized, "El nodo debe estan syncronizado");
+		try {
+			CardServiceImpl cardService = new CardServiceImpl(_server, this);
+			_balancerRegistry.registerService(cardService);
+			System.out.println(node().name() + " dado de alta frente al balancer");
+		} catch (RemoteException e) {
+			throw new IllegalStateException(e);
+		}
 	}
 
 	@Override
@@ -75,25 +102,27 @@ public class CacheNodeReceiver extends ReceiverAdapter implements CardService {
 			default:
 				throw new IllegalStateException("Unknown type: " + cacheUpdateRequest.type());
 			}
-		}else if(object instanceof CacheSync){
-            CacheSync cacheFirstSync = (CacheSync) object;
-            switch (cacheFirstSync.status()){
-                case REQUEST:
-                    if(_online) {
-                        node().sendObject(CacheSync.newSyncResponse(this._cachedData));
-                    }
-                    break;
-                case RESPONSE:
-                    if(!_online) {
-                        _cachedData.syncDataFrom(cacheFirstSync.cachedData());
-                        //TODO: acá habría que registrarse con el balancer.
-                        _online = true;
-                    }
-                    break;
-                default:
-                    throw new IllegalStateException("Unknown status: " + cacheFirstSync.status());
-            }
-        }
+		} else if (object instanceof CacheSync) {
+			CacheSync cacheFirstSync = (CacheSync) object;
+			switch (cacheFirstSync.status()) {
+			case REQUEST:
+				if (_syncronized) {
+					System.out.println(node().name() + " respondiendo pedido de syn a " + msg.getSrc());
+					node().sendObject(msg.getSrc(), CacheSync.newSyncResponse(_cachedData));
+				}
+				break;
+			case RESPONSE:
+				if (!_syncronized) {
+					_cachedData.setTo(cacheFirstSync.data());
+					System.out.println(node().name() + " syncronizado");
+					_syncronized = true;
+					registerWithBalancer();
+				}
+				break;
+			default:
+				throw new IllegalStateException("Unknown status: " + cacheFirstSync.status());
+			}
+		}
 	}
 
 	@Override
@@ -104,7 +133,7 @@ public class CacheNodeReceiver extends ReceiverAdapter implements CardService {
 		}
 		return getDataFromServer(id).balance();
 	}
-	
+
 	private UserData getDataFromServer(UID uid) throws RemoteException {
 		double balanceFromServer = server().getCardBalance(uid);
 		node().sendObject(CacheUpdateRequest.newBalance(uid, balanceFromServer));

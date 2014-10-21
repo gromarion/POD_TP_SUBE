@@ -68,7 +68,7 @@ public class ClusterNode {
 	}
 
 	public final ClusterNode sendObject(Address adress, Object object) {
-		return send(new Message(address()).setObject(object));
+		return send(new Message(adress).setObject(object));
 	}
 
 	public final ClusterNode sendObject(Object object) {

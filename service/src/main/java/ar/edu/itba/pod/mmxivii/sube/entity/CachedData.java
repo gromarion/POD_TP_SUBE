@@ -1,23 +1,27 @@
 package ar.edu.itba.pod.mmxivii.sube.entity;
 
-import com.google.common.base.Optional;
-import com.google.common.collect.Maps;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
+import java.io.Serializable;
 import java.rmi.server.UID;
 import java.util.Map;
 import java.util.Set;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import com.google.common.base.Optional;
+import com.google.common.collect.Maps;
 
-public class CachedData {
+public class CachedData implements Serializable {
+
+	private static final long serialVersionUID = 1L;
 
 	private final Map<UID, UserData> _userdatas = Maps.newHashMap();
 
 	public Set<UID> getUsers() {
 		return _userdatas.keySet();
 	}
-	
+
 	public UserData get(UID uid) {
 		return checkNotNull(_userdatas.get(uid));
 	}
@@ -32,8 +36,8 @@ public class CachedData {
 		return this;
 	}
 
-    public void syncDataFrom(CachedData cachedData){
-        _userdatas.clear();
-        _userdatas.putAll(cachedData._userdatas);
-    }
+	public void setTo(CachedData other) {
+		checkState(_userdatas.isEmpty());
+		_userdatas.putAll(other._userdatas);
+	}
 }

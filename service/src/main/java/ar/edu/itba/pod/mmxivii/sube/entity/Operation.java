@@ -2,9 +2,12 @@ package ar.edu.itba.pod.mmxivii.sube.entity;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.io.Serializable;
 import java.util.Date;
 
-public class Operation implements Comparable<Operation> {
+public class Operation implements Comparable<Operation>, Serializable {
+
+	private static final long serialVersionUID = 1L;
 
 	public static enum OperationType {
 		TRAVEL, RECHARGE
@@ -14,6 +17,10 @@ public class Operation implements Comparable<Operation> {
 	private String _description;
 	private double _amount;
 	private Date _timestamp;
+
+	public Operation() {
+		// Serialization interface
+	}
 
 	public Operation(OperationType type, String description, double amount) {
 		_type = checkNotNull(type);
