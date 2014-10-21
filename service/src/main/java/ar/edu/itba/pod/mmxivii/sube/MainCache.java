@@ -1,5 +1,11 @@
 package ar.edu.itba.pod.mmxivii.sube;
 
+import java.rmi.NotBoundException;
+import java.rmi.RemoteException;
+import java.util.Scanner;
+
+import javax.annotation.Nonnull;
+
 import ar.edu.itba.pod.mmxivii.jgroups.ClusterNode;
 import ar.edu.itba.pod.mmxivii.sube.common.BaseMain;
 import ar.edu.itba.pod.mmxivii.sube.common.CardRegistry;
@@ -10,17 +16,20 @@ import ar.edu.itba.pod.mmxivii.sube.service.CardServiceImpl;
 
 public class MainCache extends BaseMain {
 
-	private MainCache(@Nonnull String[] args) throws RemoteException, NotBoundException {
+	private MainCache(@Nonnull String[] args) throws RemoteException,
+			NotBoundException {
 		super(args, DEFAULT_CLIENT_OPTIONS);
 		getRegistry();
 		// Setup one node for now....
-		final CardRegistry server = Utils.lookupObject(CARD_REGISTRY_BIND);
+		final CardRegistry server = Utils
+				.lookupObject(Utils.CARD_REGISTRY_BIND);
 		ClusterNode node = new ClusterNode().setName("node_1");
-		CacheNodeReceiver nodeReceiver = new CacheNodeReceiver(node, server); 
+		CacheNodeReceiver nodeReceiver = new CacheNodeReceiver(node, server);
 		node.setReceiver(nodeReceiver).connectTo("cluster");
 		CardServiceImpl cardService = new CardServiceImpl(server, nodeReceiver);
 		// ???
-		CardServiceRegistry cardServiceRegistry = Utils.lookupObject(CARD_SERVICE_REGISTRY_BIND);
+		CardServiceRegistry cardServiceRegistry = Utils
+				.lookupObject(Utils.CARD_SERVICE_REGISTRY_BIND);
 		cardServiceRegistry.registerService(cardService);
 	}
 
@@ -38,7 +47,7 @@ public class MainCache extends BaseMain {
 			System.out.println("Service running");
 		} while (!"x".equals(line));
 		System.out.println("Service exit.");
+		scan.close();
 		System.exit(0);
-
 	}
 }
