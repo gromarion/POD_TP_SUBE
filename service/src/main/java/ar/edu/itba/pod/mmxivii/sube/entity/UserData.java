@@ -59,4 +59,9 @@ public class UserData implements Serializable {
 			}
 		}
 	}
+	
+	@Override
+	public String toString() {
+		return String.format("B: %f || Ops: %s", balance(), operations().toString());
+	}
 }

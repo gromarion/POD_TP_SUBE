@@ -1,15 +1,18 @@
 package ar.edu.itba.pod.mmxivii.sube.balancer;
 
-import ar.edu.itba.pod.mmxivii.sube.common.BaseMain;
-import ar.edu.itba.pod.mmxivii.sube.common.CardRegistry;
-import ar.edu.itba.pod.mmxivii.sube.common.Utils;
+import static ar.edu.itba.pod.mmxivii.sube.common.Utils.CARD_CLIENT_BIND;
+import static ar.edu.itba.pod.mmxivii.sube.common.Utils.CARD_REGISTRY_BIND;
+import static ar.edu.itba.pod.mmxivii.sube.common.Utils.CARD_SERVICE_REGISTRY_BIND;
 
-import javax.annotation.Nonnull;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.util.Scanner;
 
-import static ar.edu.itba.pod.mmxivii.sube.common.Utils.*;
+import javax.annotation.Nonnull;
+
+import ar.edu.itba.pod.mmxivii.sube.common.BaseMain;
+import ar.edu.itba.pod.mmxivii.sube.common.CardRegistry;
+import ar.edu.itba.pod.mmxivii.sube.common.Utils;
 
 public class MainBalancer extends BaseMain
 {
@@ -44,6 +47,7 @@ public class MainBalancer extends BaseMain
 			System.out.println("Balancer running");
 		} while(!"x".equals(line));
 		shutdown();
+		scan.close();
 		System.out.println("Balancer exit.");
 		System.exit(0);
 
