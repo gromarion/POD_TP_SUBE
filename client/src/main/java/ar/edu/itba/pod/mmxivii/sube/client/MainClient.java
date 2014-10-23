@@ -15,10 +15,16 @@ import javax.annotation.Nonnull;
 import ar.edu.itba.pod.mmxivii.sube.common.BaseMain;
 import ar.edu.itba.pod.mmxivii.sube.common.Card;
 import ar.edu.itba.pod.mmxivii.sube.common.CardClient;
-import ar.edu.itba.pod.mmxivii.sube.common.CardService;
 import ar.edu.itba.pod.mmxivii.sube.common.Utils;
 
 public class MainClient extends BaseMain {
+
+	public static void main(@Nonnull String[] args) throws Exception {
+//		args = new String[] { "-host", "192.168.1.116" };
+		final MainClient main = new MainClient(args);
+		main.run();
+	}
+
 	private CardClient cardClient = null;
 
 	private MainClient(@Nonnull String[] args) throws NotBoundException {
@@ -27,16 +33,11 @@ public class MainClient extends BaseMain {
 		cardClient = Utils.lookupObject(CARD_CLIENT_BIND);
 	}
 
-	public static void main(@Nonnull String[] args) throws Exception {
-		final MainClient main = new MainClient(args);
-		main.run();
-	}
-
 	private void run() throws RemoteException {
 		System.out.println("Main.run");
 		rechargeTravelAndRechargeAgainTest();
 		insuficcientCreditTravel();
-//		heavyLoadtest();
+		heavyLoadtest();
 	}
 
 	private void rechargeTravelAndRechargeAgainTest() throws RemoteException {
@@ -69,9 +70,9 @@ public class MainClient extends BaseMain {
 	}
 
 	private void heavyLoadtest() throws RemoteException {
-		new Thread(new ManyTravelingMFS()).start();
-		new Thread(new ManyTravelingMFS()).start();
-		new Thread(new ManyTravelingMFS()).start();
+		new Thread(new ManyTravelingMFS(100)).start();
+		new Thread(new ManyTravelingMFS(100)).start();
+		new Thread(new ManyTravelingMFS(100)).start();
 	}
 
 	private String randomCardId() {
@@ -80,8 +81,11 @@ public class MainClient extends BaseMain {
 
 	private final class ManyTravelingMFS implements Runnable {
 
-		private final int usersCount = 10000;
-		private CardService cardService;
+		private final int _usersCount;
+
+		public ManyTravelingMFS(int usersCount) {
+			_usersCount = usersCount;
+		}
 
 		@Override
 		public void run() {
@@ -94,25 +98,28 @@ public class MainClient extends BaseMain {
 		}
 
 		private void run_() throws Exception {
-			List<UID> cardIds = new ArrayList<UID>(usersCount);
+			List<UID> cardIds = new ArrayList<UID>(_usersCount);
 			System.out.println("Registering users....");
-			for (int i = 0; i < usersCount; i++) {
+			for (int i = 0; i < _usersCount; i++) {
 				String cardName = randomCardId();
 				Card card = cardClient.newCard(cardName, "");
 				cardIds.add(card.getId());
+				if (i % 20 == 0) {
+					System.out.println(Thread.currentThread().getId() + ": " + i / (float) _usersCount);
+				}
 			}
-			System.out.println("Registered " + usersCount + " new users...");
+			System.out.println("Registered " + _usersCount + " new users...");
 			System.out.println("Let the fun begin....");
 			int updateIndex = 0;
 			while (true) {
 				int operationsCount = randomInt(100, 200);
 				for (int i = 0; i < operationsCount; i++) {
 					UID cardId = cardIds.get(randomInt(0, cardIds.size()));
-					String desc = "operation: " + updateIndex + "x" + i;
+					String desc = "operation" + updateIndex + "x" + i;
 					float amount = 10;
-					double status = cardService.travel(cardId, "Tx" + desc, amount);
+					double status = cardClient.travel(cardId, "Tx" + desc, amount);
 					if (status < 0) {
-						cardService.recharge(cardId, "Rx" + desc, amount * randomInt(5, 10));
+						cardClient.recharge(cardId, "Rx" + desc, amount * randomInt(5, 10));
 					}
 				}
 				Thread.sleep(500);
