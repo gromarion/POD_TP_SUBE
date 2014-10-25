@@ -25,7 +25,7 @@ public class Synchronizer extends ReceiverAdapter {
 	private int _last_vote;
 	private ClusterNode _node;
 	private CardRegistry _server;
-	private static final int START_VOTATION = -1;
+	private static final int START_ELECTION = -1;
 	private static final int GET_NODE_TYPE = -2;
 	private static final int MAX_SECONDS_WITHOUT_VOTING = 15;
 
@@ -55,8 +55,10 @@ public class Synchronizer extends ReceiverAdapter {
 		if (msg.getSrc().equals(_node.address()))
 			return;
 		if (msg.getObject() instanceof Integer) {
-			if ((Integer) msg.getObject() == START_VOTATION)
+			if ((Integer) msg.getObject() == START_ELECTION) {
+				System.out.println("I must vote!");
 				vote(false);
+			}
 			else if ((Integer) msg.getObject() == GET_NODE_TYPE)
 				_node.sendObject(msg.getSrc(), getClass());
 			else if (!addVote(msg))
@@ -80,7 +82,7 @@ public class Synchronizer extends ReceiverAdapter {
 	}
 
 	private boolean addVote(Message msg) {
-		if (_votes.containsKey((Double) msg.getObject()))
+		if (_votes.containsKey((Integer) msg.getObject()))
 			return false;
 		else
 			_votes.put((Integer) msg.getObject(), msg.getSrc());
