@@ -16,6 +16,7 @@ import ar.edu.itba.pod.mmxivii.sube.common.CardRegistry;
 import ar.edu.itba.pod.mmxivii.sube.common.CardServiceRegistry;
 import ar.edu.itba.pod.mmxivii.sube.common.Utils;
 import ar.edu.itba.pod.mmxivii.sube.receiver.CacheNodeReceiver;
+import ar.edu.itba.pod.mmxivii.sube.receiver.Synchronizer;
 import ar.edu.itba.pod.mmxivii.util.Threads;
 
 public class MainCache extends BaseMain {
@@ -30,6 +31,13 @@ public class MainCache extends BaseMain {
 			ClusterNode node = new ClusterNode().setName("node_" + n);
 			CacheNodeReceiver nodeReceiver = new CacheNodeReceiver(node, server, cardServiceRegistry);
 			node.setReceiver(nodeReceiver).connectTo("cluster");
+			Threads.sleep(5, TimeUnit.SECONDS);
+		}
+		for (int n = 0; n < nodesCount; n++) {
+			final CardRegistry server = Utils.lookupObject(CARD_REGISTRY_BIND);
+			ClusterNode node = new ClusterNode().setName("node_" + n);
+			Synchronizer s = new Synchronizer(node, server);
+			node.setReceiver(s).connectTo("cluster");
 			Threads.sleep(5, TimeUnit.SECONDS);
 		}
 	}

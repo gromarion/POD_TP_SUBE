@@ -1,4 +1,4 @@
-package ar.edu.itba.pod.mmxivii.sube.synchronizer;
+package ar.edu.itba.pod.mmxivii.sube.receiver;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -17,8 +17,6 @@ import ar.edu.itba.pod.mmxivii.jgroups.ClusterNode;
 import ar.edu.itba.pod.mmxivii.sube.common.CardRegistry;
 import ar.edu.itba.pod.mmxivii.sube.entity.CachedData;
 import ar.edu.itba.pod.mmxivii.sube.entity.Operation;
-import ar.edu.itba.pod.mmxivii.sube.receiver.CacheNodeReceiver;
-import ar.edu.itba.pod.mmxivii.sube.receiver.CacheSync;
 
 public class Synchronizer extends ReceiverAdapter {
 
