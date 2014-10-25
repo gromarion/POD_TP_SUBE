@@ -1,45 +1,56 @@
 package ar.edu.itba.pod.mmxivii.sube.receiver;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import java.io.Serializable;
 import java.rmi.server.UID;
+
+import ar.edu.itba.pod.mmxivii.sube.entity.Operation;
+
+import com.google.common.base.Optional;
 
 public class CacheUpdateRequest implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 
 	public static enum RequestOperationType {
-		TRAVEL, RECHARGE, BALANCE
+		OPERATION, BALANCE
 	};
 
 	public static CacheUpdateRequest newBalance(UID id, double balance) {
-		return new CacheUpdateRequest(id, RequestOperationType.BALANCE, balance);
+		return new CacheUpdateRequest(id, balance);
 	}
 
-	public static CacheUpdateRequest newRecharge(UID id, double balance, String description) {
-		return new CacheUpdateRequest(id, RequestOperationType.RECHARGE, balance).setDescription(description);
-	}
-
-	public static CacheUpdateRequest newTravel(UID id, double balance, String description) {
-		return new CacheUpdateRequest(id, RequestOperationType.TRAVEL, balance).setDescription(description);
+	public static CacheUpdateRequest newOperation(UID id, Operation operation) {
+		checkArgument(operation.amount() > 0);
+		return new CacheUpdateRequest(id, operation);
 	}
 
 	private final UID _id;
 	private final RequestOperationType _type;
-	private final double _balance;
-	private String _description;
+	private final Optional<Double> _balance;
+	private final Optional<Operation> _operation;
 
 	public CacheUpdateRequest() {
 		// Serialization required constructor
 		_id = null;
+		_balance = Optional.absent();
 		_type = null;
-		_balance = 0;
-		_description = null;
+		_operation = Optional.absent();
 	}
 
-	public CacheUpdateRequest(UID id, RequestOperationType type, double balance) {
+	public CacheUpdateRequest(UID id, double balance) {
 		_id = id;
-		_type = type;
-		_balance = balance;
+		_balance = Optional.of(balance);
+		_operation = Optional.absent();
+		_type = RequestOperationType.BALANCE;
+	}
+
+	public CacheUpdateRequest(UID id, Operation operation) {
+		_id = id;
+		_balance = Optional.absent();
+		_operation = Optional.of(operation);
+		_type = RequestOperationType.OPERATION;
 	}
 
 	public UID uid() {
@@ -50,17 +61,12 @@ public class CacheUpdateRequest implements Serializable {
 		return _type;
 	}
 
-	public double balance() {
+	public Optional<Double> balance() {
 		return _balance;
 	}
 
-	public CacheUpdateRequest setDescription(String description) {
-		_description = description;
-		return this;
-	}
-
-	public String description() {
-		return _description;
+	public Optional<Operation> operation() {
+		return _operation;
 	}
 
 }

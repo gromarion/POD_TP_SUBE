@@ -4,7 +4,7 @@ import ar.edu.itba.pod.mmxivii.sube.entity.CachedData;
 
 import java.io.Serializable;
 
-public class CacheSync implements Serializable {
+public class CacheSyncRequest implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 
@@ -12,28 +12,28 @@ public class CacheSync implements Serializable {
 		REQUEST, RESPONSE, UPDATE
 	};
 
-	public static CacheSync newSyncRequest() {
-		return new CacheSync(null, SyncStatus.REQUEST);
+	public static CacheSyncRequest newSyncRequest() {
+		return new CacheSyncRequest(null, SyncStatus.REQUEST);
 	}
 
-	public static CacheSync newSyncResponse(CachedData cachedData) {
-		return new CacheSync(cachedData, SyncStatus.RESPONSE);
+	public static CacheSyncRequest newSyncResponse(CachedData cachedData) {
+		return new CacheSyncRequest(cachedData, SyncStatus.RESPONSE);
 	}
 
-	public static CacheSync newSyncUpdate(CachedData cachedData) {
-		return new CacheSync(cachedData, SyncStatus.UPDATE);
+	public static CacheSyncRequest newSyncUpdate(CachedData cachedData) {
+		return new CacheSyncRequest(cachedData, SyncStatus.UPDATE);
 	}
 
 	private final CachedData _cachedData;
 	private final SyncStatus _status;
 
-	public CacheSync() {
+	public CacheSyncRequest() {
 		// Serialization required constructor
 		_cachedData = null;
 		_status = null;
 	}
 
-	public CacheSync(CachedData cachedData, SyncStatus status) {
+	public CacheSyncRequest(CachedData cachedData, SyncStatus status) {
 		_cachedData = cachedData;
 		_status = status;
 	}

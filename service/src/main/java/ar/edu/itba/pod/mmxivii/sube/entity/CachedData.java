@@ -1,14 +1,17 @@
 package ar.edu.itba.pod.mmxivii.sube.entity;
 
-import com.google.common.base.Optional;
-import com.google.common.collect.Maps;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 import java.io.Serializable;
 import java.rmi.server.UID;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
-import static com.google.common.base.Preconditions.*;
+import com.google.common.base.Optional;
+import com.google.common.collect.Maps;
 
 public class CachedData implements Serializable {
 
@@ -39,11 +42,9 @@ public class CachedData implements Serializable {
 		_userdatas.putAll(other._userdatas);
 	}
 
-    public void clear(CachedData data) {
-        for (UID user : data.getUsers()) {
-            for (Operation operation : data.get(user).operations()) {
-                data.get(user).operations().remove(operation);
-            }
-        }
-    }
+	public void clearAll(CachedData data) {
+		for (Entry<UID, UserData> entry : data._userdatas.entrySet()) {
+			_userdatas.get(entry.getKey()).operations().removeAll(entry.getValue().operations());
+		}
+	}
 }

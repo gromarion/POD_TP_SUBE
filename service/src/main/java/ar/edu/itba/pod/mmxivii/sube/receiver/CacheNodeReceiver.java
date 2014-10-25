@@ -1,29 +1,32 @@
 package ar.edu.itba.pod.mmxivii.sube.receiver;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Predicates.and;
+
+import java.rmi.RemoteException;
+import java.rmi.server.UID;
+
+import org.jgroups.Message;
+import org.jgroups.ReceiverAdapter;
+import org.jgroups.View;
+import org.joda.time.LocalDateTime;
+
 import ar.edu.itba.pod.mmxivii.jgroups.ClusterNode;
 import ar.edu.itba.pod.mmxivii.sube.common.CardRegistry;
 import ar.edu.itba.pod.mmxivii.sube.common.CardService;
 import ar.edu.itba.pod.mmxivii.sube.common.CardServiceRegistry;
 import ar.edu.itba.pod.mmxivii.sube.entity.CachedData;
+import ar.edu.itba.pod.mmxivii.sube.entity.Operation;
+import ar.edu.itba.pod.mmxivii.sube.entity.Operation.OperationType;
 import ar.edu.itba.pod.mmxivii.sube.entity.UserData;
 import ar.edu.itba.pod.mmxivii.sube.predicate.OnlyDigitsAndLetters;
 import ar.edu.itba.pod.mmxivii.sube.predicate.PositiveDouble;
 import ar.edu.itba.pod.mmxivii.sube.predicate.TwoDecimalPlacesAndLessThan100;
 import ar.edu.itba.pod.mmxivii.sube.service.CardServiceImpl;
+
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
-import org.jgroups.Address;
-import org.jgroups.Message;
-import org.jgroups.ReceiverAdapter;
-import org.jgroups.View;
-
-import java.rmi.RemoteException;
-import java.rmi.server.UID;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Predicates.*;
-import static com.google.common.collect.Iterables.find;
 
 public class CacheNodeReceiver extends ReceiverAdapter implements CardService {
 
@@ -53,9 +56,8 @@ public class CacheNodeReceiver extends ReceiverAdapter implements CardService {
 	public void viewAccepted(View view) {
 		if (!_syncronized) {
 			if (view.getMembers().size() > 1) {
-				Address syncAddres = find(view.getMembers(), not(equalTo(node().address())));
-				System.out.println(node().name() + " enviando request de sync a " + syncAddres);
-				node().sendObject(syncAddres, CacheSync.newSyncRequest());
+				System.out.println(node().name() + " enviando request de sync [Broadcast]");
+				node().sendObject(CacheSyncRequest.newSyncRequest());
 			} else {
 				_syncronized = true;
 				registerWithBalancer();
@@ -84,27 +86,23 @@ public class CacheNodeReceiver extends ReceiverAdapter implements CardService {
 		if (object instanceof CacheUpdateRequest) {
 			CacheUpdateRequest cacheUpdateRequest = (CacheUpdateRequest) object;
 			UID uid = cacheUpdateRequest.uid();
-			double balance = cacheUpdateRequest.balance();
 			switch (cacheUpdateRequest.type()) {
 			case BALANCE:
-				setCardBalance(uid, balance);
+				setCardBalance(uid, cacheUpdateRequest.balance().get());
 				break;
-			case TRAVEL:
-				addTravel(uid, cacheUpdateRequest.description(), balance, _cachedData.get(uid));
-				break;
-			case RECHARGE:
-				addrecharge(uid, cacheUpdateRequest.description(), balance, _cachedData.get(uid));
+			case OPERATION:
+				addOperation(uid, cacheUpdateRequest.operation().get());
 				break;
 			default:
 				throw new IllegalStateException("Unknown type: " + cacheUpdateRequest.type());
 			}
-		} else if (object instanceof CacheSync) {
-			CacheSync cacheFirstSync = (CacheSync) object;
+		} else if (object instanceof CacheSyncRequest) {
+			CacheSyncRequest cacheFirstSync = (CacheSyncRequest) object;
 			switch (cacheFirstSync.status()) {
 			case REQUEST:
 				if (_syncronized) {
 					System.out.println(node().name() + " respondiendo pedido de syn a " + msg.getSrc());
-					node().sendObject(msg.getSrc(), CacheSync.newSyncResponse(_cachedData));
+					node().sendObject(msg.getSrc(), CacheSyncRequest.newSyncResponse(_cachedData));
 				}
 				break;
 			case RESPONSE:
@@ -115,19 +113,20 @@ public class CacheNodeReceiver extends ReceiverAdapter implements CardService {
 					registerWithBalancer();
 				}
 				break;
-            case UPDATE:
-                System.out.println("Eliminando datos a pedido de " + msg.getSrc());
-                _cachedData.clear(cacheFirstSync.data());
-                break;
+			case UPDATE:
+				System.out.println("Eliminando datos a pedido de " + msg.getSrc());
+				_cachedData.clearAll(cacheFirstSync.data());
+				break;
 			default:
 				throw new IllegalStateException("Unknown status: " + cacheFirstSync.status());
 			}
-		} else if(object instanceof Integer) {
-            Integer receiverValue = (Integer) object;
-            if(receiverValue == -2){ //TODO: mas pro
-                node().sendObject(msg.getSrc(), CacheNodeReceiver.class);
-            }
-        }
+		} else if (object instanceof Integer) {
+			// FIXME: vi peliculas de terror que me asustaron menos que esto
+			Integer receiverValue = (Integer) object;
+			if (receiverValue == -2) {
+				node().sendObject(msg.getSrc(), CacheNodeReceiver.class);
+			}
+		}
 	}
 
 	@Override
@@ -164,13 +163,10 @@ public class CacheNodeReceiver extends ReceiverAdapter implements CardService {
 		if (userdata.get().balance() < amount) {
 			return CardRegistry.OPERATION_NOT_PERMITTED_BY_BALANCE;
 		}
-		addTravel(id, description, amount, userdata.get());
-		node().sendObject(CacheUpdateRequest.newTravel(id, amount, description));
+		Operation operation = new Operation(OperationType.TRAVEL, description, amount, LocalDateTime.now());
+		addOperation(id, operation);
+		node().sendObject(CacheUpdateRequest.newOperation(id, operation));
 		return userdata.get().balance();
-	}
-
-	private void addTravel(UID id, String description, double amount, UserData userdata) {
-		userdata.substractBalance(description, amount);
 	}
 
 	@Override
@@ -186,12 +182,15 @@ public class CacheNodeReceiver extends ReceiverAdapter implements CardService {
 		if (userdata.get().balance() + amount > CardRegistry.MAX_BALANCE) {
 			return CardRegistry.OPERATION_NOT_PERMITTED_BY_BALANCE;
 		}
-		addrecharge(id, description, amount, userdata.get());
-		node().sendObject(CacheUpdateRequest.newRecharge(id, amount, description));
+		Operation operation = new Operation(OperationType.RECHARGE, description, amount, LocalDateTime.now());
+		addOperation(id, operation);
+		node().sendObject(CacheUpdateRequest.newOperation(id, operation));
 		return userdata.get().balance();
 	}
 
-	private void addrecharge(UID id, String description, double amount, UserData userdata) {
-		userdata.addBalance(description, amount);
+	private void addOperation(UID uid, Operation operation) {
+		_cachedData.get(uid).addOperation(operation);
+		System.out.println(node().name() + " => " + uid.toString() + " > " + _cachedData.get(uid).balance());
 	}
+
 }

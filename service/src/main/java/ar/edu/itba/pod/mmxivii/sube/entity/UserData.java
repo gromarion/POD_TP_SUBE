@@ -1,17 +1,18 @@
 package ar.edu.itba.pod.mmxivii.sube.entity;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import java.io.Serializable;
 import java.util.Set;
-import java.util.TreeSet;
 
-import ar.edu.itba.pod.mmxivii.sube.entity.Operation.OperationType;
+import com.google.common.collect.Sets;
 
 public class UserData implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 
 	private double _balance;
-	private final Set<Operation> _operations = new TreeSet<Operation>();
+	private final Set<Operation> _operations = Sets.newHashSet();
 
 	public UserData() {
 		// Serialization interface
@@ -30,36 +31,22 @@ public class UserData implements Serializable {
 		return _operations;
 	}
 
-	public UserData addBalance(String description, double amount) {
-		synchronized (_operations) {
-			_operations.add(new Operation(OperationType.RECHARGE, description, amount));
-			return setBalance(balance() + amount);
+	public UserData addOperation(Operation operation) {
+		checkArgument(operation.amount() > 0);
+		switch (operation.type()) {
+		case RECHARGE:
+			setBalance(balance() + operation.amount());
+			break;
+		case TRAVEL:
+			setBalance(balance() - operation.amount());
+			break;
+		default:
+			throw new IllegalStateException("Unknown operation: " + operation.type());
 		}
+		operations().add(operation);
+		return this;
 	}
 
-	public UserData substractBalance(String description, double amount) {
-		synchronized (_operations) {
-			_operations.add(new Operation(OperationType.TRAVEL, description, -amount));
-			return setBalance(balance() - amount);
-		}
-	}
-
-	public void syncOperation(Operation operation) {
-		synchronized (_operations) {
-			_operations.add(operation);
-			switch (operation.type()) {
-			case TRAVEL:
-				setBalance(balance() + operation.amount());
-				break;
-			case RECHARGE:
-				setBalance(balance() - operation.amount());
-				break;
-			default:
-				throw new IllegalStateException("Unknown operation: " + operation.type());
-			}
-		}
-	}
-	
 	@Override
 	public String toString() {
 		return String.format("B: %f || Ops: %s", balance(), operations().toString());

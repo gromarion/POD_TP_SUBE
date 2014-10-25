@@ -1,11 +1,16 @@
 package ar.edu.itba.pod.mmxivii.sube.entity;
 
-import java.io.Serializable;
-import java.util.Date;
-
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class Operation implements Comparable<Operation>, Serializable {
+import java.io.Serializable;
+
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
+import org.joda.time.LocalDateTime;
+
+public class Operation implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 
@@ -16,17 +21,17 @@ public class Operation implements Comparable<Operation>, Serializable {
 	private OperationType _type;
 	private String _description;
 	private double _amount;
-	private Date _timestamp;
+	private LocalDateTime _timestamp;
 
 	public Operation() {
 		// Serialization interface
 	}
 
-	public Operation(OperationType type, String description, double amount) {
+	public Operation(OperationType type, String description, double amount, LocalDateTime timestamp) {
 		_type = checkNotNull(type);
 		_description = checkNotNull(description);
 		_amount = amount;
-		_timestamp = new Date();
+		_timestamp = timestamp;
 	}
 
 	public double amount() {
@@ -41,28 +46,26 @@ public class Operation implements Comparable<Operation>, Serializable {
 		return _type;
 	}
 
-	@Override
-	public int compareTo(Operation o) {
-		return _timestamp.compareTo(o._timestamp);
+	public LocalDateTime timestamp() {
+		return _timestamp;
 	}
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Operation)) return false;
+	@Override
+	public boolean equals(Object o) {
+		if (o == null || !(o instanceof Operation)) {
+			return false;
+		}
+		Operation other = (Operation) o;
+		return new EqualsBuilder().append(description(), other.description()).append(type(), other.type()).append(timestamp(), other.timestamp()).isEquals();
+	}
 
-        Operation operation = (Operation) o;
+	@Override
+	public int hashCode() {
+		return new HashCodeBuilder().append(description()).append(type()).append(timestamp()).build();
+	}
 
-        if (_timestamp != null ? !_timestamp.equals(operation._timestamp) : operation._timestamp != null) return false;
-        if (_type != operation._type) return false;
-
-        return true;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = _type != null ? _type.hashCode() : 0;
-        result = 31 * result + (_timestamp != null ? _timestamp.hashCode() : 0);
-        return result;
-    }
+	@Override
+	public String toString() {
+		return ReflectionToStringBuilder.toString(this, ToStringStyle.MULTI_LINE_STYLE);
+	}
 }
