@@ -182,7 +182,7 @@ public class CacheNodeReceiver extends ReceiverAdapter implements CardService {
 			return CardRegistry.OPERATION_NOT_PERMITTED_BY_BALANCE;
 		}
 		addrecharge(id, description, amount, userdata.get());
-		node().sendObject(CacheUpdateRequest.newTravel(id, amount, description));
+		node().sendObject(CacheUpdateRequest.newRecharge(id, amount, description));
 		return userdata.get().balance();
 	}
 
