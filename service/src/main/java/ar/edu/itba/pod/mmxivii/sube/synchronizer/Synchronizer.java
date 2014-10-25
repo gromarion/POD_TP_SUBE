@@ -30,11 +30,12 @@ public class Synchronizer extends ReceiverAdapter {
 	private static final int START_VOTATION = -1;
 	private static final int GET_NODE_TYPE = -2;
 	private static final int MAX_SECONDS_WITHOUT_VOTING = 15;
-
+	
 	public Synchronizer(ClusterNode node, CardRegistry server) {
 		_votes = new HashMap<Integer, Address>();
 		_node = checkNotNull(node);
 		_server = server;
+		vote(true);
 	}
 
 	public void vote(boolean this_started_to_vote) {
@@ -58,7 +59,7 @@ public class Synchronizer extends ReceiverAdapter {
 				_node.sendObject(-1);
 			else if (_votes.keySet().size() == _node.members().size() - 1)
 				askDataToUpdateIfCoordinator();
-		} else if (msg.getObject() instanceof CacheNodeReceiver)
+		} else if (msg.getObject().equals(CacheNodeReceiver.class))
 			getDataFromNode(msg.getSrc());
 		else if (msg.getObject() instanceof CachedData)
 			updateServer((CachedData) msg.getObject());
