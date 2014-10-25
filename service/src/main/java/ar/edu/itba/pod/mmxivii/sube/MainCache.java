@@ -21,23 +21,26 @@ import ar.edu.itba.pod.mmxivii.util.Threads;
 
 public class MainCache extends BaseMain {
 
-	private MainCache(@Nonnull String[] args) throws RemoteException, NotBoundException {
+	private MainCache(@Nonnull String[] args) throws RemoteException,
+			NotBoundException {
 		super(args, DEFAULT_CLIENT_OPTIONS);
 		getRegistry();
 		int nodesCount = 3;
 		for (int n = 0; n < nodesCount; n++) {
 			final CardRegistry server = Utils.lookupObject(CARD_REGISTRY_BIND);
-			final CardServiceRegistry cardServiceRegistry = Utils.lookupObject(CARD_SERVICE_REGISTRY_BIND);
-			ClusterNode node = new ClusterNode().setName("node_" + n);
-			CacheNodeReceiver nodeReceiver = new CacheNodeReceiver(node, server, cardServiceRegistry);
-			node.setReceiver(nodeReceiver).connectTo("cluster");
+			final CardServiceRegistry cardServiceRegistry = Utils
+					.lookupObject(CARD_SERVICE_REGISTRY_BIND);
+			ClusterNode cache_node = new ClusterNode().setName("node_" + n);
+			CacheNodeReceiver nodeReceiver = new CacheNodeReceiver(cache_node,
+					server, cardServiceRegistry);
+			cache_node.setReceiver(nodeReceiver).connectTo("cluster");
 			Threads.sleep(5, TimeUnit.SECONDS);
 		}
 		for (int n = 0; n < nodesCount; n++) {
 			final CardRegistry server = Utils.lookupObject(CARD_REGISTRY_BIND);
-			ClusterNode node = new ClusterNode().setName("node_" + n);
-			Synchronizer s = new Synchronizer(node, server);
-			node.setReceiver(s).connectTo("cluster");
+			ClusterNode sync_node = new ClusterNode().setName("node_" + n);
+			Synchronizer s = new Synchronizer(sync_node, server);
+			sync_node.setReceiver(s).connectTo("cluster");
 			s.vote(true);
 			Threads.sleep(5, TimeUnit.SECONDS);
 		}
