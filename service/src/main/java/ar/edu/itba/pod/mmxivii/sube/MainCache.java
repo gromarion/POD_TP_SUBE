@@ -38,6 +38,7 @@ public class MainCache extends BaseMain {
 			ClusterNode node = new ClusterNode().setName("node_" + n);
 			Synchronizer s = new Synchronizer(node, server);
 			node.setReceiver(s).connectTo("cluster");
+			s.vote(true);
 			Threads.sleep(5, TimeUnit.SECONDS);
 		}
 	}

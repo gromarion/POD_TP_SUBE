@@ -33,7 +33,6 @@ public class Synchronizer extends ReceiverAdapter {
 		_votes = new HashMap<Integer, Address>();
 		_node = checkNotNull(node);
 		_server = server;
-		vote(true);
 	}
 
 	public void vote(boolean this_started_to_vote) {
