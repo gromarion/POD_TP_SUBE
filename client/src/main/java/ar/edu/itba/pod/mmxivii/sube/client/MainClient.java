@@ -54,7 +54,7 @@ public class MainClient extends BaseMain {
 			checkArgument((int) reportedBalance == (int) actualBalance);
 			cardClient.travel(cardId, "viaje" + i, travelCost);
 			actualBalance -= travelCost;
-			Threads.sleep(1, TimeUnit.SECONDS);
+			Threads.sleep(2, TimeUnit.SECONDS);
 		}
 		cardClient.recharge(cardId, "recarga", travelCost);
 		cardClient.travel(cardId, "travelExtraa", travelCost);

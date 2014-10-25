@@ -36,7 +36,7 @@ public class MainCache extends BaseMain {
 			ClusterNode cacheNode = new ClusterNode().setName("cache_" + n);
 			CacheNodeReceiver nodeReceiver = new CacheNodeReceiver(cacheNode, server, cardServiceRegistry);
 			cacheNode.setReceiver(nodeReceiver).connectTo("cluster");
-			Threads.sleep(5, TimeUnit.SECONDS);
+			Threads.sleep(3, TimeUnit.SECONDS);
 		}
 		for (int n = 0; n < nodesCount; n++) {
 			final CardRegistry server = Utils.lookupObject(CARD_REGISTRY_BIND);
@@ -44,7 +44,7 @@ public class MainCache extends BaseMain {
 			SynchronizerReceiver s = new SynchronizerReceiver(syncNode, server);
 			syncNode.setReceiver(s).connectTo("cluster");
 			new Thread(s).start();
-			Threads.sleep(5, TimeUnit.SECONDS);
+			Threads.sleep(3, TimeUnit.SECONDS);
 		}
 	}
 
