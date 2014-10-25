@@ -28,14 +28,21 @@ public class Synchronizer extends ReceiverAdapter {
 	private static final int START_VOTATION = -1;
 	private static final int GET_NODE_TYPE = -2;
 	private static final int MAX_SECONDS_WITHOUT_VOTING = 15;
-	
+
 	public Synchronizer(ClusterNode node, CardRegistry server) {
 		_votes = new HashMap<Integer, Address>();
 		_node = checkNotNull(node);
 		_server = server;
 	}
 
+	public void run() {
+		while (true)
+			if (mustVoteAgain())
+				vote(true);
+	}
+
 	public void vote(boolean this_started_to_vote) {
+		System.out.println(_node.address() + " is BOATING!");
 		_last_vote = Calendar.getInstance().get(Calendar.SECOND);
 		_selected_number = new Random().nextInt(Integer.MAX_VALUE);
 		if (this_started_to_vote)
@@ -54,16 +61,22 @@ public class Synchronizer extends ReceiverAdapter {
 				_node.sendObject(msg.getSrc(), getClass());
 			else if (!addVote(msg))
 				_node.sendObject(-1);
-			else if (_votes.keySet().size() == _node.members().size() - 1)
+			else if (_votes.keySet().size() == _node.members().size() - 1) {
+				System.out.println("Finished voting!");
 				askDataToUpdateIfCoordinator();
-		} else if (msg.getObject().equals(CacheNodeReceiver.class))
+			}
+		} else if (msg.getObject().equals(CacheNodeReceiver.class)) {
+			System.out.println("Asking " + msg.getSrc() + " for data");
 			getDataFromNode(msg.getSrc());
-		else if (msg.getObject() instanceof CachedData)
+		} else if (msg.getObject() instanceof CachedData) {
+			System.out.println("Received data from " + msg.getSrc());
 			updateServer((CachedData) msg.getObject());
+		}
 	}
 
 	public boolean mustVoteAgain() {
-		return Calendar.getInstance().get(Calendar.SECOND) - _last_vote < MAX_SECONDS_WITHOUT_VOTING;
+		return _last_vote == 0
+				|| Calendar.getInstance().get(Calendar.SECOND) - _last_vote < MAX_SECONDS_WITHOUT_VOTING;
 	}
 
 	private boolean addVote(Message msg) {
@@ -78,8 +91,10 @@ public class Synchronizer extends ReceiverAdapter {
 		double max_number = 0;
 		for (Integer vote : _votes.keySet())
 			max_number = vote > max_number ? vote : max_number;
-		if (_votes.get(max_number).equals(_node.address()))
+		if (_votes.get(max_number).equals(_node.address())) {
+			System.out.println(_node.address() + " is the leader!");
 			askEveryOneTheirType();
+		}
 	}
 
 	private void askEveryOneTheirType() {
@@ -91,6 +106,7 @@ public class Synchronizer extends ReceiverAdapter {
 	}
 
 	private void updateServer(CachedData cached_data) {
+		System.out.println("Updating server");
 		for (UID uid : cached_data.getUsers()) {
 			for (Operation operation : cached_data.get(uid).operations()) {
 				try {
