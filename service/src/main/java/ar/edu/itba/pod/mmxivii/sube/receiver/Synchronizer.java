@@ -69,7 +69,7 @@ public class Synchronizer extends ReceiverAdapter implements Runnable {
 		if (msg.getObject() instanceof Integer) {
             int received_value = (Integer) msg.getObject();
 			if (received_value == START_ELECTION) {
-				System.out.println("I must vote!");
+				System.out.println(_node.address() + " must vote!");
 				vote(false);
 			}
 			else if (received_value == GET_NODE_TYPE)
