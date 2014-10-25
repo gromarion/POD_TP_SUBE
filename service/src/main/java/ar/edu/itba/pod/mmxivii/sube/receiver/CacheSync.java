@@ -1,8 +1,8 @@
 package ar.edu.itba.pod.mmxivii.sube.receiver;
 
-import java.io.Serializable;
-
 import ar.edu.itba.pod.mmxivii.sube.entity.CachedData;
+
+import java.io.Serializable;
 
 public class CacheSync implements Serializable {
 
@@ -20,7 +20,6 @@ public class CacheSync implements Serializable {
 		return new CacheSync(cachedData, SyncStatus.RESPONSE);
 	}
 
-	// FIXME: este es necesario?
 	public static CacheSync newSyncUpdate(CachedData cachedData) {
 		return new CacheSync(cachedData, SyncStatus.UPDATE);
 	}

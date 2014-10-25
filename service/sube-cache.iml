@@ -9,6 +9,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="Maven: joda-time:joda-time:2.5" level="project" />
     <orderEntry type="library" name="Maven: org.jgroups:jgroups:3.5.1.Final" level="project" />
     <orderEntry type="module" module-name="sube-common" />
     <orderEntry type="library" name="Maven: com.google.guava:guava:18.0" level="project" />

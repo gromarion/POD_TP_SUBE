@@ -1,20 +1,5 @@
 package ar.edu.itba.pod.mmxivii.sube.receiver;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Predicates.and;
-import static com.google.common.base.Predicates.equalTo;
-import static com.google.common.base.Predicates.not;
-import static com.google.common.collect.Iterables.find;
-
-import java.rmi.RemoteException;
-import java.rmi.server.UID;
-
-import org.jgroups.Address;
-import org.jgroups.Message;
-import org.jgroups.ReceiverAdapter;
-import org.jgroups.View;
-
 import ar.edu.itba.pod.mmxivii.jgroups.ClusterNode;
 import ar.edu.itba.pod.mmxivii.sube.common.CardRegistry;
 import ar.edu.itba.pod.mmxivii.sube.common.CardService;
@@ -25,9 +10,20 @@ import ar.edu.itba.pod.mmxivii.sube.predicate.OnlyDigitsAndLetters;
 import ar.edu.itba.pod.mmxivii.sube.predicate.PositiveDouble;
 import ar.edu.itba.pod.mmxivii.sube.predicate.TwoDecimalPlacesAndLessThan100;
 import ar.edu.itba.pod.mmxivii.sube.service.CardServiceImpl;
-
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
+import org.jgroups.Address;
+import org.jgroups.Message;
+import org.jgroups.ReceiverAdapter;
+import org.jgroups.View;
+
+import java.rmi.RemoteException;
+import java.rmi.server.UID;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Predicates.*;
+import static com.google.common.collect.Iterables.find;
 
 public class CacheNodeReceiver extends ReceiverAdapter implements CardService {
 
@@ -119,10 +115,19 @@ public class CacheNodeReceiver extends ReceiverAdapter implements CardService {
 					registerWithBalancer();
 				}
 				break;
+            case UPDATE:
+                System.out.println("Eliminando datos a pedido de " + msg.getSrc());
+                _cachedData.clear(cacheFirstSync.data());
+                break;
 			default:
 				throw new IllegalStateException("Unknown status: " + cacheFirstSync.status());
 			}
-		}
+		} else if(object instanceof Integer) {
+            Integer receiverValue = (Integer) object;
+            if(receiverValue == -2){ //TODO: mas pro
+                node().sendObject(msg.getSrc(), CacheNodeReceiver.class);
+            }
+        }
 	}
 
 	@Override

@@ -1,15 +1,5 @@
 package ar.edu.itba.pod.mmxivii.sube;
 
-import static ar.edu.itba.pod.mmxivii.sube.common.Utils.CARD_REGISTRY_BIND;
-import static ar.edu.itba.pod.mmxivii.sube.common.Utils.CARD_SERVICE_REGISTRY_BIND;
-
-import java.rmi.NotBoundException;
-import java.rmi.RemoteException;
-import java.util.Scanner;
-import java.util.concurrent.TimeUnit;
-
-import javax.annotation.Nonnull;
-
 import ar.edu.itba.pod.mmxivii.jgroups.ClusterNode;
 import ar.edu.itba.pod.mmxivii.sube.common.BaseMain;
 import ar.edu.itba.pod.mmxivii.sube.common.CardRegistry;
@@ -18,6 +8,15 @@ import ar.edu.itba.pod.mmxivii.sube.common.Utils;
 import ar.edu.itba.pod.mmxivii.sube.receiver.CacheNodeReceiver;
 import ar.edu.itba.pod.mmxivii.sube.receiver.Synchronizer;
 import ar.edu.itba.pod.mmxivii.util.Threads;
+
+import javax.annotation.Nonnull;
+import java.rmi.NotBoundException;
+import java.rmi.RemoteException;
+import java.util.Scanner;
+import java.util.concurrent.TimeUnit;
+
+import static ar.edu.itba.pod.mmxivii.sube.common.Utils.CARD_REGISTRY_BIND;
+import static ar.edu.itba.pod.mmxivii.sube.common.Utils.CARD_SERVICE_REGISTRY_BIND;
 
 public class MainCache extends BaseMain {
 
@@ -30,7 +29,7 @@ public class MainCache extends BaseMain {
 			final CardRegistry server = Utils.lookupObject(CARD_REGISTRY_BIND);
 			final CardServiceRegistry cardServiceRegistry = Utils
 					.lookupObject(CARD_SERVICE_REGISTRY_BIND);
-			ClusterNode cache_node = new ClusterNode().setName("node_" + n);
+			ClusterNode cache_node = new ClusterNode().setName("cache_" + n);
 			CacheNodeReceiver nodeReceiver = new CacheNodeReceiver(cache_node,
 					server, cardServiceRegistry);
 			cache_node.setReceiver(nodeReceiver).connectTo("cluster");
@@ -38,10 +37,10 @@ public class MainCache extends BaseMain {
 		}
 		for (int n = 0; n < nodesCount; n++) {
 			final CardRegistry server = Utils.lookupObject(CARD_REGISTRY_BIND);
-			ClusterNode sync_node = new ClusterNode().setName("node_" + n);
+			ClusterNode sync_node = new ClusterNode().setName("sync_" + n);
 			Synchronizer s = new Synchronizer(sync_node, server);
 			sync_node.setReceiver(s).connectTo("cluster");
-			s.vote(true);
+            new Thread(s).start();
 			Threads.sleep(5, TimeUnit.SECONDS);
 		}
 	}

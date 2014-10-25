@@ -1,9 +1,9 @@
 package ar.edu.itba.pod.mmxivii.sube.entity;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.io.Serializable;
 import java.util.Date;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public class Operation implements Comparable<Operation>, Serializable {
 
@@ -45,4 +45,24 @@ public class Operation implements Comparable<Operation>, Serializable {
 	public int compareTo(Operation o) {
 		return _timestamp.compareTo(o._timestamp);
 	}
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Operation)) return false;
+
+        Operation operation = (Operation) o;
+
+        if (_timestamp != null ? !_timestamp.equals(operation._timestamp) : operation._timestamp != null) return false;
+        if (_type != operation._type) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = _type != null ? _type.hashCode() : 0;
+        result = 31 * result + (_timestamp != null ? _timestamp.hashCode() : 0);
+        return result;
+    }
 }
