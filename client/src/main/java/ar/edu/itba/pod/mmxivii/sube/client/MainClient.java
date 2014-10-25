@@ -49,8 +49,8 @@ public class MainClient extends BaseMain {
 		double rechargeStatus = cardClient.recharge(cardId, "recarga", actualBalance);
 		checkArgument(rechargeStatus > 0);
 		for (int i = 0; i < 10; i++) {
-			double resportedBalance = cardClient.getCardBalance(cardId);
-			checkArgument((int) resportedBalance == (int) actualBalance);
+			double reportedBalance = cardClient.getCardBalance(cardId);
+			checkArgument((int) reportedBalance == (int) actualBalance);
 			cardClient.travel(cardId, "viaje" + i, travelCost);
 			actualBalance -= travelCost;
 		}
