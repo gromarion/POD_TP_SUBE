@@ -24,7 +24,7 @@ public class CardServiceImpl extends UnicastRemoteObject implements CardService 
 	}
 
     @Override
-    public boolean ping() {
+    public boolean ping() throws RemoteException {
         return _delegate.ping();
     }
 

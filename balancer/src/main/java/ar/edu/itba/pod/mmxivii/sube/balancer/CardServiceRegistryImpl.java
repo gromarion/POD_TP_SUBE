@@ -34,19 +34,16 @@ public class CardServiceRegistryImpl extends UnicastRemoteObject implements Card
 	}
 
 	CardService getCardService() {
-
-        boolean gotCandidate = false;
-        CardService candidate = _servicesCycle.next();
-
-        while(!gotCandidate){
-            try{
-                gotCandidate = candidate.ping();
-            }catch(Exception e){
-                _servicesCycle.remove();
-                candidate = _servicesCycle.next();
-            }
-        }
-
-        return candidate;
-    }
+		boolean gotCandidate = false;
+		CardService candidate = _servicesCycle.next();
+		while (!gotCandidate) {
+			try {
+				gotCandidate = candidate.ping();
+			} catch (Exception e) {
+				_servicesCycle.remove();
+				candidate = _servicesCycle.next();
+			}
+		}
+		return candidate;
+	}
 }

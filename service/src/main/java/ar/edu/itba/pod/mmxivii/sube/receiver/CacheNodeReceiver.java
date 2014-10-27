@@ -153,7 +153,7 @@ public class CacheNodeReceiver extends ReceiverAdapter implements CardService {
 	}
 
     @Override
-    public boolean ping() {
+    public boolean ping() throws RemoteException {
         return true;
     }
 
