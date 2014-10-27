@@ -59,6 +59,15 @@ public abstract class BaseMain
 		try {
 			rmiRegistry.bind(name, remote);
 		} catch (AlreadyBoundException | RemoteException e) {
+			if (e instanceof AlreadyBoundException) {
+				try {
+					rmiRegistry.unbind(name);
+					rmiRegistry.bind(name, remote);
+					return;
+				} catch (Exception e1) {
+					throw new RuntimeException(e);
+				}
+			}
 			throw new RuntimeException(e);
 		}
 	}
