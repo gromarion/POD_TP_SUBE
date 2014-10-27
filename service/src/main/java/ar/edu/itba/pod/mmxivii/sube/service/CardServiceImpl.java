@@ -1,13 +1,12 @@
 package ar.edu.itba.pod.mmxivii.sube.service;
 
+import ar.edu.itba.pod.mmxivii.sube.common.CardRegistry;
+import ar.edu.itba.pod.mmxivii.sube.common.CardService;
+
+import javax.annotation.Nonnull;
 import java.rmi.RemoteException;
 import java.rmi.server.UID;
 import java.rmi.server.UnicastRemoteObject;
-
-import javax.annotation.Nonnull;
-
-import ar.edu.itba.pod.mmxivii.sube.common.CardRegistry;
-import ar.edu.itba.pod.mmxivii.sube.common.CardService;
 
 public class CardServiceImpl extends UnicastRemoteObject implements CardService {
 
@@ -24,7 +23,12 @@ public class CardServiceImpl extends UnicastRemoteObject implements CardService 
 		_delegate = delegate;
 	}
 
-	@Override
+    @Override
+    public boolean ping() {
+        return _delegate.ping();
+    }
+
+    @Override
 	public double getCardBalance(@Nonnull UID id) throws RemoteException {
 //		return cardRegistry.getCardBalance(id);
 		return _delegate.getCardBalance(id);

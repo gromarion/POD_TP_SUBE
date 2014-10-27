@@ -152,7 +152,12 @@ public class CacheNodeReceiver extends ReceiverAdapter implements CardService {
 		}
 	}
 
-	@Override
+    @Override
+    public boolean ping() {
+        return true;
+    }
+
+    @Override
 	public double getCardBalance(UID id) throws RemoteException {
 		Optional<UserData> userdata = _cachedData.tryGet(id);
 		if (userdata.isPresent()) {

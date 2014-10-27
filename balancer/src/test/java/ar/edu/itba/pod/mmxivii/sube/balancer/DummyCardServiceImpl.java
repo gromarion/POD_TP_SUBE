@@ -8,7 +8,12 @@ import java.rmi.server.UID;
 
 public class DummyCardServiceImpl implements CardService
 {
-	@Override
+    @Override
+    public boolean ping() {
+        return true;
+    }
+
+    @Override
 	public double getCardBalance(@Nonnull UID id) throws RemoteException
 	{
 		return 0;
