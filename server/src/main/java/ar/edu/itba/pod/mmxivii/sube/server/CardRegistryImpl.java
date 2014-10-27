@@ -60,6 +60,7 @@ public class CardRegistryImpl extends UnicastRemoteObject implements CardRegistr
 		assertAmount(amount);
 		assertText(description);
 		delay();
+		System.out.println(id + " > " + description + " > " + amount);
 		synchronized (balances) {
 			Double result = balances.get(checkNotNull(id));
 			if (result == null) return CARD_NOT_FOUND;

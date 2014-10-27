@@ -9,6 +9,7 @@ import java.rmi.server.UID;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nonnull;
 
@@ -49,10 +50,11 @@ public class MainClient extends BaseMain {
 		double rechargeStatus = cardClient.recharge(cardId, "recarga", actualBalance);
 		checkArgument(rechargeStatus > 0);
 		for (int i = 0; i < 10; i++) {
-			double resportedBalance = cardClient.getCardBalance(cardId);
-			checkArgument((int) resportedBalance == (int) actualBalance);
+			double reportedBalance = cardClient.getCardBalance(cardId);
+			checkArgument((int) reportedBalance == (int) actualBalance);
 			cardClient.travel(cardId, "viaje" + i, travelCost);
 			actualBalance -= travelCost;
+			Threads.sleep(2, TimeUnit.SECONDS);
 		}
 		cardClient.recharge(cardId, "recarga", travelCost);
 		cardClient.travel(cardId, "travelExtraa", travelCost);
@@ -64,6 +66,7 @@ public class MainClient extends BaseMain {
 		Card card = cardClient.newCard(cardName, "");
 		UID cardId = card.getId();
 		cardClient.recharge(cardId, "recarga", 50);
+		Threads.sleep(1, TimeUnit.SECONDS);
 		double status = cardClient.travel(cardId, "travel", 51);
 		checkArgument(status < 0);
 		System.out.println("Test 2 seems OK");
@@ -121,6 +124,7 @@ public class MainClient extends BaseMain {
 					if (status < 0) {
 						cardClient.recharge(cardId, "Rx" + desc, amount * randomInt(5, 10));
 					}
+					Threads.sleep(1, TimeUnit.SECONDS);
 				}
 				Thread.sleep(500);
 			}
