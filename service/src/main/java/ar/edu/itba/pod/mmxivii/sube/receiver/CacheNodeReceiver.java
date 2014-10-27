@@ -1,9 +1,11 @@
 package ar.edu.itba.pod.mmxivii.sube.receiver;
 
+import static ar.edu.itba.pod.mmxivii.sube.common.Utils.CARD_REGISTRY_BIND;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Predicates.and;
 
+import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.server.UID;
 
@@ -16,6 +18,7 @@ import ar.edu.itba.pod.mmxivii.jgroups.ClusterNode;
 import ar.edu.itba.pod.mmxivii.sube.common.CardRegistry;
 import ar.edu.itba.pod.mmxivii.sube.common.CardService;
 import ar.edu.itba.pod.mmxivii.sube.common.CardServiceRegistry;
+import ar.edu.itba.pod.mmxivii.sube.common.Utils;
 import ar.edu.itba.pod.mmxivii.sube.entity.CachedData;
 import ar.edu.itba.pod.mmxivii.sube.entity.Operation;
 import ar.edu.itba.pod.mmxivii.sube.entity.Operation.OperationType;
@@ -30,18 +33,30 @@ import com.google.common.base.Predicate;
 
 public class CacheNodeReceiver extends ReceiverAdapter implements CardService {
 
+	private static final String numberRegex = "[0-9]*(\\.[0-9]?[0-9]?)?";
+
+	public static double trimAfter2Zeros(double d) {
+		String s = d + "";
+		if (s.matches(numberRegex)) {
+			return Double.parseDouble(String.format("%.2f", d));
+		}
+		return d;
+	}
+
 	private final Predicate<Double> _amountValidator = and(new TwoDecimalPlacesAndLessThan100(), new PositiveDouble());
 	private final Predicate<String> _descValidator = new OnlyDigitsAndLetters();
 	private final ClusterNode _node;
+	
 	private CardRegistry _server;
+	private boolean _serverIsDown;
 	private CardServiceRegistry _balancerRegistry;
 	private final CachedData _cachedData = new CachedData();
 	private boolean _syncronized = false;
 
-	public CacheNodeReceiver(ClusterNode node, CardRegistry server, CardServiceRegistry balancerRegistry) {
+	public CacheNodeReceiver(ClusterNode node, CardServiceRegistry balancerRegistry) {
 		_node = checkNotNull(node);
-		_server = checkNotNull(server);
 		_balancerRegistry = checkNotNull(balancerRegistry);
+		_serverIsDown = true;
 	}
 
 	public final ClusterNode node() {
@@ -49,6 +64,14 @@ public class CacheNodeReceiver extends ReceiverAdapter implements CardService {
 	}
 
 	public final CardRegistry server() {
+		if (_serverIsDown) {
+			try {
+				_server = Utils.lookupObject(CARD_REGISTRY_BIND);
+				_serverIsDown = true;
+			} catch (NotBoundException e) {
+				e.printStackTrace();
+			}
+		}
 		return _server;
 	}
 
@@ -68,7 +91,7 @@ public class CacheNodeReceiver extends ReceiverAdapter implements CardService {
 	private void registerWithBalancer() {
 		checkArgument(_syncronized, "El nodo debe estan syncronizado");
 		try {
-			CardServiceImpl cardService = new CardServiceImpl(_server, this);
+			CardServiceImpl cardService = new CardServiceImpl(server(), this);
 			_balancerRegistry.registerService(cardService);
 			System.out.println(node().name() + " dado de alta frente al balancer");
 		} catch (RemoteException e) {
@@ -135,13 +158,22 @@ public class CacheNodeReceiver extends ReceiverAdapter implements CardService {
 		if (userdata.isPresent()) {
 			return userdata.get().balance();
 		}
-		return getDataFromServer(id).balance();
+		userdata = getDataFromServer(id);
+		if (!userdata.isPresent()) {
+			return CardRegistry.COMMUNICATIONS_FAILURE;
+		}
+		return userdata.get().balance();
 	}
 
-	private UserData getDataFromServer(UID uid) throws RemoteException {
-		double balanceFromServer = server().getCardBalance(uid);
-		node().sendObject(CacheUpdateRequest.newBalance(uid, balanceFromServer));
-		return setCardBalance(uid, balanceFromServer);
+	private Optional<UserData> getDataFromServer(UID uid) throws RemoteException {
+		try {
+			double balanceFromServer = server().getCardBalance(uid);
+			node().sendObject(CacheUpdateRequest.newBalance(uid, balanceFromServer));
+			return Optional.of(setCardBalance(uid, balanceFromServer));
+		} catch (Exception e) {
+			_serverIsDown = true;
+			return Optional.absent();
+		}
 	}
 
 	private UserData setCardBalance(UID uid, double balance) {
@@ -158,7 +190,10 @@ public class CacheNodeReceiver extends ReceiverAdapter implements CardService {
 		}
 		Optional<UserData> userdata = _cachedData.tryGet(id);
 		if (!userdata.isPresent()) {
-			userdata = Optional.of(getDataFromServer(id));
+			userdata = getDataFromServer(id);
+			if (!userdata.isPresent()) {
+				return CardRegistry.COMMUNICATIONS_FAILURE;
+			}
 		}
 		if (userdata.get().balance() < amount) {
 			return CardRegistry.OPERATION_NOT_PERMITTED_BY_BALANCE;
@@ -177,7 +212,10 @@ public class CacheNodeReceiver extends ReceiverAdapter implements CardService {
 		}
 		Optional<UserData> userdata = _cachedData.tryGet(id);
 		if (!userdata.isPresent()) {
-			userdata = Optional.of(getDataFromServer(id));
+			userdata = getDataFromServer(id);
+			if (!userdata.isPresent()) {
+				return CardRegistry.COMMUNICATIONS_FAILURE;
+			}
 		}
 		if (userdata.get().balance() + amount > CardRegistry.MAX_BALANCE) {
 			return CardRegistry.OPERATION_NOT_PERMITTED_BY_BALANCE;
