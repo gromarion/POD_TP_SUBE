@@ -3,6 +3,7 @@ package ar.edu.itba.pod.mmxivii.sube.receiver;
 import ar.edu.itba.pod.mmxivii.jgroups.ClusterNode;
 import ar.edu.itba.pod.mmxivii.sube.common.CardRegistry;
 import ar.edu.itba.pod.mmxivii.sube.entity.Operation;
+import ar.edu.itba.pod.mmxivii.util.Threads;
 import org.jgroups.Address;
 import org.jgroups.Message;
 import org.jgroups.ReceiverAdapter;
@@ -13,12 +14,13 @@ import java.rmi.server.UID;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class SynchronizerReceiver extends ReceiverAdapter implements Runnable {
 
-	private static final int BOATING_TIME_TIMEOUT = 3;
+	private static final int BOATING_TIME_TIMEOUT = 10;
 	private static final int START_ELECTION = -1;
 	private static final int GET_NODE_TYPE = -2;
 	private static final int MAX_SECONDS_WITHOUT_VOTING = 15;
@@ -47,6 +49,8 @@ public class SynchronizerReceiver extends ReceiverAdapter implements Runnable {
 				_boating = false;
 				askDataToUpdateIfCoordinator();
 			}
+
+            Threads.sleep(1, TimeUnit.SECONDS);
 		}
 	}
 
