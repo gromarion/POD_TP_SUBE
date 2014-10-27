@@ -1,6 +1,5 @@
 package ar.edu.itba.pod.mmxivii.sube;
 
-import static ar.edu.itba.pod.mmxivii.sube.common.Utils.CARD_REGISTRY_BIND;
 import static ar.edu.itba.pod.mmxivii.sube.common.Utils.CARD_SERVICE_REGISTRY_BIND;
 
 import java.rmi.NotBoundException;
@@ -12,7 +11,6 @@ import javax.annotation.Nonnull;
 
 import ar.edu.itba.pod.mmxivii.jgroups.ClusterNode;
 import ar.edu.itba.pod.mmxivii.sube.common.BaseMain;
-import ar.edu.itba.pod.mmxivii.sube.common.CardRegistry;
 import ar.edu.itba.pod.mmxivii.sube.common.CardServiceRegistry;
 import ar.edu.itba.pod.mmxivii.sube.common.Utils;
 import ar.edu.itba.pod.mmxivii.sube.receiver.CacheNodeReceiver;
@@ -38,9 +36,8 @@ public class MainCache extends BaseMain {
 			Threads.sleep(3, TimeUnit.SECONDS);
 		}
 		for (int n = 0; n < nodesCount; n++) {
-			final CardRegistry server = Utils.lookupObject(CARD_REGISTRY_BIND);
 			ClusterNode syncNode = new ClusterNode().setName("sync_" + n);
-			SynchronizerReceiver s = new SynchronizerReceiver(syncNode, server);
+			SynchronizerReceiver s = new SynchronizerReceiver(syncNode);
 			syncNode.setReceiver(s).connectTo("cluster");
 			new Thread(s).start();
 			Threads.sleep(3, TimeUnit.SECONDS);

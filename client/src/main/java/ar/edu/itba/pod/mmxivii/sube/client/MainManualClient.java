@@ -1,10 +1,6 @@
 package ar.edu.itba.pod.mmxivii.sube.client;
 
-import ar.edu.itba.pod.mmxivii.sube.common.*;
-
-import javax.annotation.Nonnull;
-
-import com.google.common.base.Strings;
+import static ar.edu.itba.pod.mmxivii.sube.common.Utils.CARD_CLIENT_BIND;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -12,7 +8,15 @@ import java.io.InputStreamReader;
 import java.rmi.server.UID;
 import java.util.UUID;
 
-import static ar.edu.itba.pod.mmxivii.sube.common.Utils.CARD_CLIENT_BIND;
+import javax.annotation.Nonnull;
+
+import ar.edu.itba.pod.mmxivii.sube.common.BaseMain;
+import ar.edu.itba.pod.mmxivii.sube.common.Card;
+import ar.edu.itba.pod.mmxivii.sube.common.CardClient;
+import ar.edu.itba.pod.mmxivii.sube.common.CardRegistry;
+import ar.edu.itba.pod.mmxivii.sube.common.Utils;
+
+import com.google.common.base.Strings;
 
 public class MainManualClient extends BaseMain {
 
@@ -52,7 +56,7 @@ public class MainManualClient extends BaseMain {
 					System.out.println("Comando incorrecto!\n\n" + getHelp());
 				} else {
 					command = splitLine[0];
-					double parameter;
+					int parameter;
 					double result = 0;
 
 					switch (command) {
@@ -61,7 +65,7 @@ public class MainManualClient extends BaseMain {
 						break;
 					case "travel":
 						if (splitLine.length > 1) {
-							parameter = Double.parseDouble(Strings.nullToEmpty(splitLine[1]));
+							parameter = Integer.parseInt(Strings.nullToEmpty(splitLine[1]));
 							result = cardClient.travel(cardId, "viaje", parameter);
 						} else {
 							System.out.println(getHelp());
@@ -70,8 +74,7 @@ public class MainManualClient extends BaseMain {
 					case "recharge":
 						System.out.println(splitLine[1]);
 						if (splitLine.length > 1) {
-							parameter = Double.parseDouble(Strings.nullToEmpty(splitLine[1]));
-							parameter = 1.11;
+							parameter = Integer.parseInt(Strings.nullToEmpty(splitLine[1]));
 							result = cardClient.recharge(cardId, "recarga", parameter);
 						} else {
 							System.out.println(getHelp());

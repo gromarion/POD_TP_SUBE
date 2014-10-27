@@ -1,22 +1,29 @@
 package ar.edu.itba.pod.mmxivii.sube.receiver;
 
-import ar.edu.itba.pod.mmxivii.jgroups.ClusterNode;
-import ar.edu.itba.pod.mmxivii.sube.common.CardRegistry;
-import ar.edu.itba.pod.mmxivii.sube.entity.Operation;
-import ar.edu.itba.pod.mmxivii.util.Threads;
+import static ar.edu.itba.pod.mmxivii.sube.common.Utils.CARD_REGISTRY_BIND;
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.rmi.NotBoundException;
+import java.rmi.server.UID;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
+
 import org.jgroups.Address;
 import org.jgroups.Message;
 import org.jgroups.ReceiverAdapter;
 import org.joda.time.LocalDateTime;
 
-import java.rmi.RemoteException;
-import java.rmi.server.UID;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
-import java.util.concurrent.TimeUnit;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import ar.edu.itba.pod.mmxivii.jgroups.ClusterNode;
+import ar.edu.itba.pod.mmxivii.sube.common.CardRegistry;
+import ar.edu.itba.pod.mmxivii.sube.common.Utils;
+import ar.edu.itba.pod.mmxivii.sube.entity.Operation;
+import ar.edu.itba.pod.mmxivii.util.Threads;
 
 public class SynchronizerReceiver extends ReceiverAdapter implements Runnable {
 
@@ -31,12 +38,26 @@ public class SynchronizerReceiver extends ReceiverAdapter implements Runnable {
 	private int _selected_number;
 	private LocalDateTime _last_vote;
 	private ClusterNode _node;
+
+	private boolean _serverIsDown;
 	private CardRegistry _server;
 
-	public SynchronizerReceiver(ClusterNode node, CardRegistry server) {
+	public SynchronizerReceiver(ClusterNode node) {
 		_votes = new HashMap<Address, Integer>();
 		_node = checkNotNull(node);
-		_server = checkNotNull(server);
+		_serverIsDown = true;
+	}
+
+	public final CardRegistry server() {
+		if (_serverIsDown) {
+			try {
+				_server = Utils.lookupObject(CARD_REGISTRY_BIND);
+				_serverIsDown = false;
+			} catch (NotBoundException e) {
+				_serverIsDown = true;
+			}
+		}
+		return _server;
 	}
 
 	@Override
@@ -49,13 +70,12 @@ public class SynchronizerReceiver extends ReceiverAdapter implements Runnable {
 				_boating = false;
 				askDataToUpdateIfCoordinator();
 			}
-
             Threads.sleep(1, TimeUnit.SECONDS);
 		}
 	}
 
 	public void vote(boolean this_started_to_vote) {
-		System.out.println(_node.address() + " is BOATING!");
+//		System.out.println(_node.address() + " is BOATING!");
 		_last_vote = LocalDateTime.now();
 		_selected_number = new Random().nextInt(Integer.MAX_VALUE);
 		_boating = true;
@@ -71,7 +91,7 @@ public class SynchronizerReceiver extends ReceiverAdapter implements Runnable {
 		if (msg.getObject() instanceof Integer) {
 			int received_value = (Integer) msg.getObject();
 			if (received_value == START_ELECTION) {
-				System.out.println(_node.address() + " must vote!");
+//				System.out.println(_node.address() + " must vote!");
 				vote(false);
 			} else if (received_value == GET_NODE_TYPE)
 				_node.sendObject(msg.getSrc(), getClass());
@@ -124,17 +144,31 @@ public class SynchronizerReceiver extends ReceiverAdapter implements Runnable {
 	}
 
 	private void updateServer(CacheSyncRequest cache_sync) {
-		System.out.println("Updating server");
-		for (UID uid : cache_sync.data().getUsers()) {
-			for (Operation operation : cache_sync.data().get(uid).operations()) {
-				try {
-					_server.addCardOperation(uid, operation.type().toString(), operation.amount());
-				} catch (RemoteException e) {
-					e.printStackTrace();
+		System.out.println(_node.name() + " Updating server");
+		try {
+			for (UID uid : cache_sync.data().getUsers()) {
+				List<Operation> ops = new LinkedList<>(cache_sync.data().get(uid).operations());
+				Collections.sort(ops, new TimestampDesc());
+				for (Operation operation : ops) {
+					server().addCardOperation(uid, operation.type().toString(), operation.amount());
 				}
 			}
+			_is_asking_cache_for_info = false;
+			_node.sendObject(CacheSyncRequest.newSyncUpdate(cache_sync.data()));
+		} catch (Exception e) {
+			e.printStackTrace();
+			_serverIsDown = true;
+			System.out.println("Server is down, can not syncronize!!");
+			
 		}
-		_is_asking_cache_for_info = false;
-		_node.sendObject(CacheSyncRequest.newSyncUpdate(cache_sync.data()));
+	}
+	
+	private static final class TimestampDesc implements Comparator<Operation> {
+
+		@Override
+		public int compare(Operation arg0, Operation arg1) {
+			return arg0.timestamp().compareTo(arg1.timestamp());
+		}
+		
 	}
 }

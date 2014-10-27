@@ -67,9 +67,9 @@ public class CacheNodeReceiver extends ReceiverAdapter implements CardService {
 		if (_serverIsDown) {
 			try {
 				_server = Utils.lookupObject(CARD_REGISTRY_BIND);
-				_serverIsDown = true;
+				_serverIsDown = false;
 			} catch (NotBoundException e) {
-				e.printStackTrace();
+				_serverIsDown = true;
 			}
 		}
 		return _server;
@@ -91,7 +91,7 @@ public class CacheNodeReceiver extends ReceiverAdapter implements CardService {
 	private void registerWithBalancer() {
 		checkArgument(_syncronized, "El nodo debe estan syncronizado");
 		try {
-			CardServiceImpl cardService = new CardServiceImpl(server(), this);
+			CardServiceImpl cardService = new CardServiceImpl(this);
 			_balancerRegistry.registerService(cardService);
 			System.out.println(node().name() + " dado de alta frente al balancer");
 		} catch (RemoteException e) {
