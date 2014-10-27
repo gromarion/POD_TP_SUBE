@@ -1,31 +1,39 @@
 package ar.edu.itba.pod.mmxivii.sube.balancer;
 
-import ar.edu.itba.pod.mmxivii.sube.common.CardService;
-import ar.edu.itba.pod.mmxivii.sube.common.CardServiceRegistry;
-import com.google.common.collect.Iterables;
-
-import javax.annotation.Nonnull;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import javax.annotation.Nonnull;
+
+import ar.edu.itba.pod.mmxivii.sube.common.CardService;
+import ar.edu.itba.pod.mmxivii.sube.common.CardServiceRegistry;
 
 public class CardServiceRegistryImpl extends UnicastRemoteObject implements CardServiceRegistry {
+	
 	private static final long serialVersionUID = 2473638728674152366L;
 	private final List<CardService> serviceList = Collections.synchronizedList(new ArrayList<CardService>());
-	private final Iterator<CardService> _servicesCycle;
 
 	protected CardServiceRegistryImpl() throws RemoteException {
-		_servicesCycle = Iterables.cycle(serviceList).iterator();
+		super();
 	}
 
 	@Override
 	public void registerService(@Nonnull CardService service) throws RemoteException {
-		serviceList.add(service);
+		synchronized (serviceList) {
+			serviceList.add(service);
+		}
 	}
 
 	@Override
 	public void unRegisterService(@Nonnull CardService service) throws RemoteException {
-		serviceList.remove(service);
+		synchronized (serviceList) {
+			serviceList.remove(service);
+		}
 	}
 
 	@Override
@@ -33,17 +41,24 @@ public class CardServiceRegistryImpl extends UnicastRemoteObject implements Card
 		return serviceList;
 	}
 
+	private AtomicInteger index = new AtomicInteger();
+
 	CardService getCardService() {
-		boolean gotCandidate = false;
-		CardService candidate = _servicesCycle.next();
-		while (!gotCandidate) {
-			try {
-				gotCandidate = candidate.ping();
-			} catch (Exception e) {
-				_servicesCycle.remove();
-				candidate = _servicesCycle.next();
-			}
+		synchronized (serviceList) {
+			boolean pingOK;
+			CardService service;
+			do {
+				service = serviceList.get(index.get());
+				try {
+					pingOK = service.ping();
+				} catch (Exception e) {
+					pingOK = false;
+					serviceList.remove(index);
+				}
+				index.incrementAndGet();
+				index.set(index.get() % serviceList.size());
+			} while (!pingOK);
+			return service;
 		}
-		return candidate;
 	}
 }
