@@ -1,19 +1,13 @@
 package ar.edu.itba.pod.mmxivii.sube.balancer;
 
-import java.rmi.RemoteException;
-import java.rmi.server.UnicastRemoteObject;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-
-import javax.annotation.Nonnull;
-
 import ar.edu.itba.pod.mmxivii.sube.common.CardService;
 import ar.edu.itba.pod.mmxivii.sube.common.CardServiceRegistry;
-
 import com.google.common.collect.Iterables;
+
+import javax.annotation.Nonnull;
+import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
+import java.util.*;
 
 public class CardServiceRegistryImpl extends UnicastRemoteObject implements CardServiceRegistry {
 	private static final long serialVersionUID = 2473638728674152366L;
@@ -40,6 +34,19 @@ public class CardServiceRegistryImpl extends UnicastRemoteObject implements Card
 	}
 
 	CardService getCardService() {
-		return _servicesCycle.next();
-	}
+
+        boolean gotCandidate = false;
+        CardService candidate = _servicesCycle.next();
+
+        while(!gotCandidate){
+            try{
+                gotCandidate = candidate.ping();
+            }catch(Exception e){
+                _servicesCycle.remove();
+                candidate = _servicesCycle.next();
+            }
+        }
+
+        return candidate;
+    }
 }

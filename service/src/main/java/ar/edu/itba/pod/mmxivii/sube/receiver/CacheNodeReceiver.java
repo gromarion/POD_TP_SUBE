@@ -1,17 +1,5 @@
 package ar.edu.itba.pod.mmxivii.sube.receiver;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Predicates.and;
-
-import java.rmi.RemoteException;
-import java.rmi.server.UID;
-
-import org.jgroups.Message;
-import org.jgroups.ReceiverAdapter;
-import org.jgroups.View;
-import org.joda.time.LocalDateTime;
-
 import ar.edu.itba.pod.mmxivii.jgroups.ClusterNode;
 import ar.edu.itba.pod.mmxivii.sube.common.CardRegistry;
 import ar.edu.itba.pod.mmxivii.sube.common.CardService;
@@ -24,9 +12,19 @@ import ar.edu.itba.pod.mmxivii.sube.predicate.OnlyDigitsAndLetters;
 import ar.edu.itba.pod.mmxivii.sube.predicate.PositiveDouble;
 import ar.edu.itba.pod.mmxivii.sube.predicate.TwoDecimalPlacesAndLessThan100;
 import ar.edu.itba.pod.mmxivii.sube.service.CardServiceImpl;
-
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
+import org.jgroups.Message;
+import org.jgroups.ReceiverAdapter;
+import org.jgroups.View;
+import org.joda.time.LocalDateTime;
+
+import java.rmi.RemoteException;
+import java.rmi.server.UID;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Predicates.and;
 
 public class CacheNodeReceiver extends ReceiverAdapter implements CardService {
 
@@ -129,7 +127,12 @@ public class CacheNodeReceiver extends ReceiverAdapter implements CardService {
 		}
 	}
 
-	@Override
+    @Override
+    public boolean ping() {
+        return true;
+    }
+
+    @Override
 	public double getCardBalance(UID id) throws RemoteException {
 		Optional<UserData> userdata = _cachedData.tryGet(id);
 		if (userdata.isPresent()) {

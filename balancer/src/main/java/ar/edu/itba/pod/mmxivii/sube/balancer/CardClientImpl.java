@@ -67,7 +67,12 @@ public class CardClientImpl extends UnicastRemoteObject implements CardClient
 		}
 	}
 
-	@Override
+    @Override
+    public boolean ping() {
+        return true;
+    }
+
+    @Override
 	public double getCardBalance(@Nonnull UID id) throws RemoteException
 	{
 		return getCardService().getCardBalance(id);

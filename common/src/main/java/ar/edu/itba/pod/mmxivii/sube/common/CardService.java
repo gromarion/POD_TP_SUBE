@@ -7,6 +7,8 @@ import java.rmi.server.UID;
 
 public interface CardService extends Remote
 {
+    boolean ping();
+
 	/**
 	 *
 	 * @param id el identificador de la tarjeta
