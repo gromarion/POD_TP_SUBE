@@ -28,16 +28,28 @@ public class MainClient extends BaseMain {
 
 	private CardClient cardClient = null;
 
-	private MainClient(@Nonnull String[] args) throws NotBoundException {
+	private MainClient(@Nonnull String[] args) throws NotBoundException, RemoteException {
 		super(args, DEFAULT_CLIENT_OPTIONS);
 		getRegistry();
 		cardClient = Utils.lookupObject(CARD_CLIENT_BIND);
+		boolean auto = false;
+		for (String s : args) {
+			if (s.startsWith("_auto")) {
+				auto = true;
+				break;
+			}
+		}
+		if (auto) {
+			heavyLoadtest();
+		} else {
+			MainManualClient.main(args);
+		}
 	}
 
 	private void run() throws RemoteException {
 		System.out.println("Main.run");
-		rechargeTravelAndRechargeAgainTest();
-		insuficcientCreditTravel();
+//		rechargeTravelAndRechargeAgainTest();
+//		insuficcientCreditTravel();
 		heavyLoadtest();
 	}
 
@@ -73,9 +85,9 @@ public class MainClient extends BaseMain {
 	}
 
 	private void heavyLoadtest() throws RemoteException {
-		new Thread(new ManyTravelingMFS(100)).start();
-		new Thread(new ManyTravelingMFS(100)).start();
-		new Thread(new ManyTravelingMFS(100)).start();
+		new Thread(new ManyTravelingMFS(10)).start();
+		new Thread(new ManyTravelingMFS(10)).start();
+		new Thread(new ManyTravelingMFS(10)).start();
 	}
 
 	private String randomCardId() {
@@ -114,7 +126,8 @@ public class MainClient extends BaseMain {
 			System.out.println("Registered " + _usersCount + " new users...");
 			System.out.println("Let the fun begin....");
 			int updateIndex = 0;
-			while (true) {
+			int operationCount = 0;
+			while (operationCount < 100) {
 				int operationsCount = randomInt(100, 200);
 				for (int i = 0; i < operationsCount; i++) {
 					UID cardId = cardIds.get(randomInt(0, cardIds.size()));

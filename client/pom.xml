@@ -55,7 +55,7 @@
                         <configuration>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>ar.edu.itba.pod.mmxivii.sube.client.Main</mainClass>
+                                    <mainClass>ar.edu.itba.pod.mmxivii.sube.client.MainClient</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>
