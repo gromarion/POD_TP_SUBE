@@ -127,8 +127,8 @@ public class MainClient extends BaseMain {
 			System.out.println("Let the fun begin....");
 			int updateIndex = 0;
 			int operationCount = 0;
-			while (operationCount < 100) {
-				int operationsCount = randomInt(100, 200);
+			while (operationCount < 5) {
+				int operationsCount = 1;
 				for (int i = 0; i < operationsCount; i++) {
 					UID cardId = cardIds.get(randomInt(0, cardIds.size()));
 					String desc = "operation" + updateIndex + "x" + i;

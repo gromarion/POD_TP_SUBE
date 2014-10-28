@@ -46,7 +46,7 @@ public class MainManualClient extends BaseMain {
 		String command = "";
 
 		do {
-			System.out.print("\nIngrese un comando: ");
+			System.out.print(card.getId() + "\nIngrese un comando: ");
 			BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 			UID cardId = card.getId();
 			try {
